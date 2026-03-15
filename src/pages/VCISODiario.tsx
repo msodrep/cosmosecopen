@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useVCISOLogEntries, type VCISOLogEntry } from '@/hooks/useVCISOLogEntries';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   BookOpen,
   Plus,
@@ -25,6 +26,7 @@ import {
   FileCheck,
   CheckSquare,
   MoreHorizontal,
+  Eye,
 } from 'lucide-react';
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
