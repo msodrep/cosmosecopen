@@ -3,13 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
-export type AppRole = 'admin' | 'auditor' | 'analyst';
+export type AppRole = 'admin' | 'auditor' | 'analyst' | 'clevel';
 
 export interface Permissions {
   role: AppRole;
   isAdmin: boolean;
   isAuditor: boolean;
   isAnalyst: boolean;
+  isCLevel: boolean;
   /** Can create, edit, delete records */
   canEdit: boolean;
   /** Can perform destructive bulk operations */
@@ -22,7 +23,7 @@ export interface Permissions {
   canExportImport: boolean;
 }
 
-const ROLE_PERMISSIONS: Record<AppRole, Omit<Permissions, 'role' | 'isAdmin' | 'isAuditor' | 'isAnalyst'>> = {
+const ROLE_PERMISSIONS: Record<AppRole, Omit<Permissions, 'role' | 'isAdmin' | 'isAuditor' | 'isAnalyst' | 'isCLevel'>> = {
   admin: {
     canEdit: true,
     canBulkDelete: true,
@@ -43,6 +44,13 @@ const ROLE_PERMISSIONS: Record<AppRole, Omit<Permissions, 'role' | 'isAdmin' | '
     canManageTeam: false,
     canManageOrg: false,
     canExportImport: false,
+  },
+  clevel: {
+    canEdit: false,
+    canBulkDelete: false,
+    canManageTeam: false,
+    canManageOrg: false,
+    canExportImport: true,
   },
 };
 
@@ -76,6 +84,7 @@ export function usePermissions(): Permissions & { isLoading: boolean } {
     isAdmin: currentRole === 'admin',
     isAuditor: currentRole === 'auditor',
     isAnalyst: currentRole === 'analyst',
+    isCLevel: currentRole === 'clevel',
     ...perms,
     isLoading,
   };

@@ -459,6 +459,69 @@ export type Database = {
         }
         Relationships: []
       }
+      continuity_tests: {
+        Row: {
+          conducted_by: string | null
+          created_at: string
+          description: string | null
+          executed_date: string | null
+          id: string
+          lessons_learned: string | null
+          organization_id: string
+          report_url: string | null
+          scheduled_date: string
+          status: string
+          test_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          conducted_by?: string | null
+          created_at?: string
+          description?: string | null
+          executed_date?: string | null
+          id?: string
+          lessons_learned?: string | null
+          organization_id: string
+          report_url?: string | null
+          scheduled_date: string
+          status?: string
+          test_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          conducted_by?: string | null
+          created_at?: string
+          description?: string | null
+          executed_date?: string | null
+          id?: string
+          lessons_learned?: string | null
+          organization_id?: string
+          report_url?: string | null
+          scheduled_date?: string
+          status?: string
+          test_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "continuity_tests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "continuity_tests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       controls: {
         Row: {
           category: string | null
@@ -898,6 +961,76 @@ export type Database = {
           },
           {
             foreignKeyName: "generated_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      key_risk_indicators: {
+        Row: {
+          created_at: string
+          current_value: number | null
+          description: string | null
+          framework_id: string | null
+          id: string
+          measured_at: string | null
+          name: string
+          organization_id: string
+          severity: string
+          target_value: number | null
+          trend: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          framework_id?: string | null
+          id?: string
+          measured_at?: string | null
+          name: string
+          organization_id: string
+          severity?: string
+          target_value?: number | null
+          trend?: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          framework_id?: string | null
+          id?: string
+          measured_at?: string | null
+          name?: string
+          organization_id?: string
+          severity?: string
+          target_value?: number | null
+          trend?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "key_risk_indicators_framework_id_fkey"
+            columns: ["framework_id"]
+            isOneToOne: false
+            referencedRelation: "frameworks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "key_risk_indicators_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "key_risk_indicators_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations_safe"
@@ -2028,6 +2161,72 @@ export type Database = {
           },
         ]
       }
+      strategic_roadmap_items: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string
+          id: string
+          organization_id: string
+          priority: string
+          quarter: string | null
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          organization_id: string
+          priority?: string
+          quarter?: string | null
+          start_date: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          organization_id?: string
+          priority?: string
+          quarter?: string | null
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategic_roadmap_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strategic_roadmap_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       super_admins: {
         Row: {
           created_at: string | null
@@ -2078,6 +2277,57 @@ export type Database = {
           },
           {
             foreignKeyName: "user_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vciso_log_entries: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          entry_date: string
+          hours_spent: number | null
+          id: string
+          organization_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          hours_spent?: number | null
+          id?: string
+          organization_id: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          hours_spent?: number | null
+          id?: string
+          organization_id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vciso_log_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vciso_log_entries_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations_safe"
@@ -3335,7 +3585,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "auditor" | "analyst"
+      app_role: "admin" | "auditor" | "analyst" | "clevel"
       conformity_status:
         | "conforme"
         | "parcial"
@@ -3474,7 +3724,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "auditor", "analyst"],
+      app_role: ["admin", "auditor", "analyst", "clevel"],
       conformity_status: [
         "conforme",
         "parcial",

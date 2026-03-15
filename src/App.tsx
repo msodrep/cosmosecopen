@@ -11,6 +11,7 @@ import { FrameworkProvider } from "@/contexts/FrameworkContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { VendorLayout } from "@/components/layout/VendorLayout";
 import { PolicyLayout } from "@/components/layout/PolicyLayout";
+import { VCISOLayout } from "@/components/layout/VCISOLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AUTH_ROUTE } from "@/lib/constants";
 
@@ -57,6 +58,12 @@ const QualificationTemplateBuilder = lazy(() => import("@/pages/QualificationTem
 const QualificationCampaigns = lazy(() => import("@/pages/QualificationCampaigns"));
 const VendorQualificationPortal = lazy(() => import("@/pages/VendorQualificationPortal"));
 const AcceptInvite = lazy(() => import("@/pages/AcceptInvite"));
+const VCISODashboard = lazy(() => import("@/pages/VCISODashboard"));
+const VCISORoadmap = lazy(() => import("@/pages/VCISORoadmap"));
+const VCISOKRIs = lazy(() => import("@/pages/VCISOKRIs"));
+const VCISODiario = lazy(() => import("@/pages/VCISODiario"));
+const VCISOContinuidade = lazy(() => import("@/pages/VCISOContinuidade"));
+const VCISORiscos = lazy(() => import("@/pages/VCISORiscos"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -165,6 +172,17 @@ const App = () => (
                         <Route path="/policies/aceite" element={<PolicyAceite />} />
                         <Route path="/policies/templates" element={<PolicyTemplates />} />
                         <Route path="/policies/configuracoes" element={<Configuracoes />} />
+                      </Route>
+
+                      {/* Módulo vCISO (Torre de Controle) */}
+                      <Route element={<VCISOLayout />}>
+                        <Route path="/vciso" element={<VCISODashboard />} />
+                        <Route path="/vciso/roadmap" element={<VCISORoadmap />} />
+                        <Route path="/vciso/kris" element={<VCISOKRIs />} />
+                        <Route path="/vciso/diario" element={<VCISODiario />} />
+                        <Route path="/vciso/continuidade" element={<VCISOContinuidade />} />
+                        <Route path="/vciso/riscos" element={<VCISORiscos />} />
+                        <Route path="/vciso/configuracoes" element={<Configuracoes />} />
                       </Route>
 
                       <Route path="*" element={<NotFound />} />

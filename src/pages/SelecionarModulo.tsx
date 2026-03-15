@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, Building, ArrowRight, ArrowLeft, Sparkles, Loader2, FileText } from 'lucide-react';
+import { Shield, Building, ArrowRight, ArrowLeft, Sparkles, Loader2, FileText, Eye } from 'lucide-react';
 import { StarField } from '@/components/ui/star-field';
 import { CosmoSecLogo } from '@/components/ui/CosmoSecLogo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,6 +36,15 @@ const modules = [
     colorClass: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/30 text-emerald-500',
     bgGlow: 'bg-emerald-500/20',
     route: '/policies',
+  },
+  {
+    id: 'vciso',
+    title: 'vCISO',
+    description: 'Torre de Controle para Executivos de Segurança. Painel C-Level, KRIs, roadmap estratégico, diário de bordo e testes de continuidade.',
+    icon: Eye,
+    colorClass: 'from-amber-500/20 to-amber-500/5 border-amber-500/30 text-amber-500',
+    bgGlow: 'bg-amber-500/20',
+    route: '/vciso',
   },
 ];
 
