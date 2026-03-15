@@ -53,6 +53,7 @@ const emptyForm = {
 
 export default function VCISOKRIs() {
   const { data: kris, isLoading, createKRI, updateKRI, deleteKRI } = useKRIs();
+  const { canEdit, isCLevel } = usePermissions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingKRI, setEditingKRI] = useState<KRI | null>(null);
   const [form, setForm] = useState(emptyForm);
