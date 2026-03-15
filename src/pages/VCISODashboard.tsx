@@ -1,54 +1,50 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAssessments } from '@/hooks/useAssessments';
 import { useRisks } from '@/hooks/useRisks';
 import { useControls } from '@/hooks/useControls';
 import { useActionPlans } from '@/hooks/useActionPlans';
-import { useFrameworks } from '@/hooks/useFrameworks';
 import { SecurityPostureScore } from '@/components/dashboard/SecurityPostureScore';
 import { TopThreatsWidget } from '@/components/dashboard/TopThreatsWidget';
 import { ComplianceRadarChart } from '@/components/dashboard/ComplianceRadarChart';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Shield,
   AlertTriangle,
   TrendingUp,
   Clock,
   CheckCircle2,
-  XCircle,
-  Activity,
-  BarChart3,
-  FileText,
   Eye,
 } from 'lucide-react';
 
 export default function VCISODashboard() {
   const { organization } = useOrganization();
-  const { assessments, isLoading: assessmentsLoading } = useAssessments();
-  const { risks, isLoading: risksLoading } = useRisks();
-  const { controls, isLoading: controlsLoading } = useControls();
-  const { actionPlans, isLoading: plansLoading } = useActionPlans();
-  const { frameworks } = useFrameworks();
+  const assessmentsQuery = useAssessments();
+  const risksQuery = useRisks();
+  const controlsQuery = useControls();
+  const actionPlansQuery = useActionPlans();
 
-  const isLoading = assessmentsLoading || risksLoading || controlsLoading || plansLoading;
+  const assessments = assessmentsQuery.data || [];
+  const risks = risksQuery.data || [];
+  const controls = controlsQuery.data || [];
+  const actionPlans = actionPlansQuery.data || [];
 
-  // Compute summary metrics
-  const overdueCount = actionPlans?.filter(
+  const isLoading = assessmentsQuery.isLoading || risksQuery.isLoading || controlsQuery.isLoading || actionPlansQuery.isLoading;
+
+  const overdueCount = actionPlans.filter(
     (p) => p.status !== 'done' && p.due_date && new Date(p.due_date) < new Date()
-  ).length ?? 0;
+  ).length;
 
-  const criticalRisks = risks?.filter(
+  const criticalRisks = risks.filter(
     (r) => r.inherent_probability * r.inherent_impact >= 20
-  ) ?? [];
+  );
 
-  const completedPlans = actionPlans?.filter((p) => p.status === 'done').length ?? 0;
-  const totalPlans = actionPlans?.length ?? 0;
+  const completedPlans = actionPlans.filter((p) => p.status === 'done').length;
+  const totalPlans = actionPlans.length;
   const planCompletionRate = totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0;
 
-  const conformeCount = assessments?.filter((a) => a.status === 'conforme').length ?? 0;
-  const complianceRate = assessments && assessments.length > 0
+  const conformeCount = assessments.filter((a) => a.status === 'conforme').length;
+  const complianceRate = assessments.length > 0
     ? Math.round((conformeCount / assessments.length) * 100) : 0;
 
   return (
@@ -154,23 +150,22 @@ export default function VCISODashboard() {
       {/* Main Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <SecurityPostureScore
-          assessments={assessments || []}
-          risks={risks || []}
-          controls={controls?.map((c) => ({ id: c.id })) || []}
+          assessments={assessments}
+          risks={risks}
+          controls={controls.map((c) => ({ id: c.id }))}
           isLoading={isLoading}
         />
         <ComplianceRadarChart
-          assessments={assessments || []}
-          controls={controls || []}
+          assessments={assessments}
+          controls={controls}
           isLoading={isLoading}
         />
       </div>
 
       {/* Bottom Section */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <TopThreatsWidget risks={risks || []} isLoading={isLoading} />
+        <TopThreatsWidget risks={risks} isLoading={isLoading} />
 
-        {/* Overdue Action Plans */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-space flex items-center gap-2">
@@ -192,7 +187,7 @@ export default function VCISODashboard() {
             ) : (
               <div className="space-y-3 max-h-[300px] overflow-y-auto">
                 {actionPlans
-                  ?.filter((p) => p.status !== 'done' && p.due_date && new Date(p.due_date) < new Date())
+                  .filter((p) => p.status !== 'done' && p.due_date && new Date(p.due_date) < new Date())
                   .slice(0, 5)
                   .map((plan) => (
                     <div key={plan.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card/40">

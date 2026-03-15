@@ -84,6 +84,7 @@ export function usePermissions(): Permissions & { isLoading: boolean } {
     isAdmin: currentRole === 'admin',
     isAuditor: currentRole === 'auditor',
     isAnalyst: currentRole === 'analyst',
+    isCLevel: currentRole === 'clevel',
     ...perms,
     isLoading,
   };

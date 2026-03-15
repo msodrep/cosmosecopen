@@ -10,7 +10,7 @@ interface Organization {
   logo_url: string | null;
   created_at?: string;
   updated_at?: string;
-  role?: 'admin' | 'auditor' | 'analyst';
+  role?: 'admin' | 'auditor' | 'analyst' | 'clevel';
 }
 
 interface OrganizationContextType {
