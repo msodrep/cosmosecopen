@@ -1,6 +1,10 @@
 import { useLocation, NavLink as RouterNavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useRisks, calculateRiskLevel } from '@/hooks/useRisks';
+import { useActionPlans } from '@/hooks/useActionPlans';
+import { useContinuityTests } from '@/hooks/useContinuityTests';
+import { isPast, parseISO } from 'date-fns';
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +27,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
 import {
   LayoutDashboard,
   Settings,
@@ -50,6 +55,7 @@ type NavItem = {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
+  badgeKey?: string;
 };
 
 const mainNavItems: NavItem[] = [
@@ -57,8 +63,8 @@ const mainNavItems: NavItem[] = [
   { title: 'Roadmap Estratégico', url: '/vciso/roadmap', icon: Map },
   { title: 'KRIs', url: '/vciso/kris', icon: Activity },
   { title: 'Diário de Bordo', url: '/vciso/diario', icon: BookOpen },
-  { title: 'Testes de Continuidade', url: '/vciso/continuidade', icon: ShieldCheck },
-  { title: 'Riscos', url: '/vciso/riscos', icon: AlertTriangle },
+  { title: 'Testes de Continuidade', url: '/vciso/continuidade', icon: ShieldCheck, badgeKey: 'overdueTests' },
+  { title: 'Riscos', url: '/vciso/riscos', icon: AlertTriangle, badgeKey: 'criticalRisks' },
 ];
 
 const configNavItems: NavItem[] = [
@@ -72,6 +78,24 @@ export function VCISOSidebar() {
   const { organization, organizations, setActiveOrganization } = useOrganization();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
+
+  // Badge data
+  const risksQuery = useRisks({ filterByFramework: false });
+  const actionPlansQuery = useActionPlans();
+  const testsQuery = useContinuityTests();
+
+  const criticalRisksCount = (risksQuery.data || []).filter(
+    r => calculateRiskLevel(r.inherent_probability, r.inherent_impact) >= 20
+  ).length;
+
+  const overdueTestsCount = (testsQuery.data || []).filter(
+    t => t.status === 'agendado' && isPast(parseISO(t.scheduled_date))
+  ).length;
+
+  const badges: Record<string, number> = {
+    criticalRisks: criticalRisksCount,
+    overdueTests: overdueTestsCount,
+  };
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'U';
@@ -152,24 +176,32 @@ export function VCISOSidebar() {
           <SidebarGroupLabel className="text-sidebar-foreground/50">Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={
-                      item.url === '/vciso'
-                        ? location.pathname === '/vciso'
-                        : location.pathname === item.url || location.pathname.startsWith(item.url + '/')
-                    }
-                    tooltip={item.title}
-                  >
-                    <RouterNavLink to={item.url}>
-                      <item.icon className="w-4 h-4" />
-                      <span className="flex-1">{item.title}</span>
-                    </RouterNavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {mainNavItems.map((item) => {
+                const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        item.url === '/vciso'
+                          ? location.pathname === '/vciso'
+                          : location.pathname === item.url || location.pathname.startsWith(item.url + '/')
+                      }
+                      tooltip={item.title}
+                    >
+                      <RouterNavLink to={item.url}>
+                        <item.icon className="w-4 h-4" />
+                        <span className="flex-1">{item.title}</span>
+                        {badgeCount > 0 && !collapsed && (
+                          <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-[10px] font-bold">
+                            {badgeCount}
+                          </Badge>
+                        )}
+                      </RouterNavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
