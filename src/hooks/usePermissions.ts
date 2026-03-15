@@ -23,7 +23,7 @@ export interface Permissions {
   canExportImport: boolean;
 }
 
-const ROLE_PERMISSIONS: Record<AppRole, Omit<Permissions, 'role' | 'isAdmin' | 'isAuditor' | 'isAnalyst'>> = {
+const ROLE_PERMISSIONS: Record<AppRole, Omit<Permissions, 'role' | 'isAdmin' | 'isAuditor' | 'isAnalyst' | 'isCLevel'>> = {
   admin: {
     canEdit: true,
     canBulkDelete: true,
@@ -44,6 +44,13 @@ const ROLE_PERMISSIONS: Record<AppRole, Omit<Permissions, 'role' | 'isAdmin' | '
     canManageTeam: false,
     canManageOrg: false,
     canExportImport: false,
+  },
+  clevel: {
+    canEdit: false,
+    canBulkDelete: false,
+    canManageTeam: false,
+    canManageOrg: false,
+    canExportImport: true,
   },
 };
 
