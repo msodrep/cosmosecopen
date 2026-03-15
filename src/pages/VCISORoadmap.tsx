@@ -65,6 +65,7 @@ const emptyForm = {
 
 export default function VCISORoadmap() {
   const { data: items, isLoading, createItem, updateItem, deleteItem } = useRoadmapItems();
+  const { canEdit, isCLevel } = usePermissions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<RoadmapItem | null>(null);
   const [form, setForm] = useState(emptyForm);
