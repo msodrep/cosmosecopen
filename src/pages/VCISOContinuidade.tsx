@@ -181,14 +181,16 @@ export default function VCISOContinuidade() {
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-1 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(test)}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteTest.mutate(test.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {canEdit && (
+                      <div className="flex gap-1 shrink-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(test)}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteTest.mutate(test.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

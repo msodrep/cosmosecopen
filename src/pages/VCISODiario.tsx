@@ -254,14 +254,16 @@ export default function VCISODiario() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(entry)}>
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteEntry.mutate(entry.id)}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
+                    {canEdit && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(entry)}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteEntry.mutate(entry.id)}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

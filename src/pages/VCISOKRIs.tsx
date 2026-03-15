@@ -210,12 +210,16 @@ export default function VCISOKRIs() {
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                       <Badge variant="outline" className={cn('text-xs', sevCfg.color)}>{sevCfg.label}</Badge>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(kri)}>
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteKRI.mutate(kri.id)}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                      {canEdit && (
+                        <>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(kri)}>
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteKRI.mutate(kri.id)}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardHeader>

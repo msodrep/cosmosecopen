@@ -264,14 +264,16 @@ export default function VCISORoadmap() {
                             </Badge>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}>
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteItem.mutate(item.id)}>
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
+                        {canEdit && (
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteItem.mutate(item.id)}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                       {/* Timeline bar */}
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
