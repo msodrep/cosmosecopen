@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useKRIs, type KRI } from '@/hooks/useKRIs';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   Activity,
   Plus,
@@ -22,6 +23,7 @@ import {
   AlertTriangle,
   Shield,
   Target,
+  Eye,
 } from 'lucide-react';
 
 const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
