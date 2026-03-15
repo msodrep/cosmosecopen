@@ -980,6 +980,8 @@ export type Database = {
           organization_id: string
           severity: string
           target_value: number | null
+          threshold_critical: number | null
+          threshold_warning: number | null
           trend: string
           unit: string
           updated_at: string
@@ -995,6 +997,8 @@ export type Database = {
           organization_id: string
           severity?: string
           target_value?: number | null
+          threshold_critical?: number | null
+          threshold_warning?: number | null
           trend?: string
           unit?: string
           updated_at?: string
@@ -1010,6 +1014,8 @@ export type Database = {
           organization_id?: string
           severity?: string
           target_value?: number | null
+          threshold_critical?: number | null
+          threshold_warning?: number | null
           trend?: string
           unit?: string
           updated_at?: string
@@ -1031,6 +1037,55 @@ export type Database = {
           },
           {
             foreignKeyName: "key_risk_indicators_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kri_history: {
+        Row: {
+          created_at: string
+          id: string
+          kri_id: string
+          organization_id: string
+          recorded_at: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kri_id: string
+          organization_id: string
+          recorded_at?: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kri_id?: string
+          organization_id?: string
+          recorded_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kri_history_kri_id_fkey"
+            columns: ["kri_id"]
+            isOneToOne: false
+            referencedRelation: "key_risk_indicators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kri_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kri_history_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations_safe"
