@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useKRIs, type KRI } from '@/hooks/useKRIs';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -24,7 +23,10 @@ import {
   Shield,
   Target,
   Eye,
+  Sparkles,
+  Zap,
 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
   low: { label: 'Baixo', color: 'bg-blue-500/10 text-blue-500 border-blue-500/30' },
@@ -38,6 +40,15 @@ const TREND_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   down: TrendingDown,
   stable: Minus,
 };
+
+const KRI_TEMPLATES = [
+  { name: '% Funcionários com treinamento de segurança', unit: '%', target_value: 95, severity: 'medium' },
+  { name: 'Tempo médio de aplicação de patches (dias)', unit: 'dias', target_value: 7, severity: 'high' },
+  { name: 'Sistemas críticos sem backup testado', unit: 'un', target_value: 0, severity: 'critical' },
+  { name: 'Vulnerabilidades críticas abertas', unit: 'un', target_value: 0, severity: 'critical' },
+  { name: 'Cobertura de MFA (%)', unit: '%', target_value: 100, severity: 'high' },
+  { name: 'Incidentes de segurança no mês', unit: 'un', target_value: 0, severity: 'medium' },
+];
 
 const emptyForm = {
   name: '',
@@ -58,6 +69,7 @@ export default function VCISOKRIs() {
   const [editingKRI, setEditingKRI] = useState<KRI | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const filtered = useMemo(() => {
     if (!kris) return [];
@@ -106,11 +118,35 @@ export default function VCISOKRIs() {
     setDialogOpen(false);
   };
 
+  const handleUseTemplate = (template: typeof KRI_TEMPLATES[0]) => {
+    createKRI.mutate({
+      name: template.name,
+      description: '',
+      current_value: 0,
+      target_value: template.target_value,
+      unit: template.unit,
+      trend: 'stable',
+      severity: template.severity,
+      measured_at: new Date().toISOString(),
+      framework_id: null,
+    });
+    setShowTemplates(false);
+  };
+
   const getProgressColor = (kri: KRI) => {
     const ratio = kri.target_value > 0 ? kri.current_value / kri.target_value : 0;
     if (ratio >= 0.8) return 'bg-emerald-500';
     if (ratio >= 0.5) return 'bg-amber-500';
     return 'bg-destructive';
+  };
+
+  // Check if a KRI is in alert (exceeds target in wrong direction)
+  const isAlert = (kri: KRI) => {
+    // For "lower is better" KRIs (unit is 'un' or 'dias'), current > target is bad
+    if ((kri.unit === 'un' || kri.unit === 'dias') && kri.current_value > kri.target_value) return true;
+    // For percentage KRIs, current < 50% of target is bad
+    if (kri.unit === '%' && kri.target_value > 0 && kri.current_value < kri.target_value * 0.5) return true;
+    return false;
   };
 
   return (
@@ -126,13 +162,21 @@ export default function VCISOKRIs() {
             <p className="text-muted-foreground">Indicadores de risco de negócio com metas e tendências</p>
           </div>
         </div>
-        {canEdit ? (
-          <Button onClick={openCreate} className="gap-2">
-            <Plus className="w-4 h-4" /> Novo KRI
-          </Button>
-        ) : isCLevel ? (
-          <Badge variant="outline" className="border-blue-500/30 text-blue-500 gap-1"><Eye className="w-3 h-3" /> Somente Leitura</Badge>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {canEdit && (
+            <>
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => setShowTemplates(true)}>
+                <Sparkles className="w-3.5 h-3.5" /> Templates
+              </Button>
+              <Button onClick={openCreate} className="gap-2">
+                <Plus className="w-4 h-4" /> Novo KRI
+              </Button>
+            </>
+          )}
+          {isCLevel && !canEdit && (
+            <Badge variant="outline" className="border-blue-500/30 text-blue-500 gap-1"><Eye className="w-3 h-3" /> Somente Leitura</Badge>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -186,9 +230,16 @@ export default function VCISOKRIs() {
             <Activity className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
             <h3 className="text-lg font-semibold mb-2">Nenhum KRI cadastrado</h3>
             <p className="text-muted-foreground mb-4">Defina indicadores de risco para monitorar a segurança</p>
-            <Button onClick={openCreate} variant="outline" className="gap-2">
-              <Plus className="w-4 h-4" /> Criar primeiro KRI
-            </Button>
+            {canEdit && (
+              <div className="flex gap-2 justify-center">
+                <Button onClick={() => setShowTemplates(true)} variant="outline" className="gap-2">
+                  <Sparkles className="w-4 h-4" /> Usar Template
+                </Button>
+                <Button onClick={openCreate} variant="outline" className="gap-2">
+                  <Plus className="w-4 h-4" /> Criar manual
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -197,13 +248,19 @@ export default function VCISOKRIs() {
             const sevCfg = SEVERITY_CONFIG[kri.severity] || SEVERITY_CONFIG.low;
             const TrendIcon = TREND_ICONS[kri.trend] || Minus;
             const progressPct = kri.target_value > 0 ? Math.min(100, Math.round((kri.current_value / kri.target_value) * 100)) : 0;
+            const alerting = isAlert(kri);
 
             return (
-              <Card key={kri.id} className="border-border/50">
+              <Card key={kri.id} className={cn('border-border/50', alerting && 'border-destructive/50 shadow-destructive/10 shadow-sm')}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base font-space truncate">{kri.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-base font-space truncate">{kri.name}</CardTitle>
+                        {alerting && (
+                          <Zap className="w-4 h-4 text-destructive animate-pulse flex-shrink-0" />
+                        )}
+                      </div>
                       {kri.description && (
                         <CardDescription className="line-clamp-2 mt-1">{kri.description}</CardDescription>
                       )}
@@ -253,7 +310,44 @@ export default function VCISOKRIs() {
         </div>
       )}
 
-      {/* Dialog */}
+      {/* Templates Dialog */}
+      <Dialog open={showTemplates} onOpenChange={setShowTemplates}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-space flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-500" />
+              Templates de KRI
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {KRI_TEMPLATES.map((tpl, i) => {
+              const exists = kris?.some(k => k.name === tpl.name);
+              return (
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card/40">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{tpl.name}</p>
+                    <p className="text-xs text-muted-foreground">Meta: {tpl.target_value}{tpl.unit} • {SEVERITY_CONFIG[tpl.severity]?.label}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={exists}
+                    onClick={() => handleUseTemplate(tpl)}
+                    className="ml-2 flex-shrink-0"
+                  >
+                    {exists ? 'Já existe' : 'Adicionar'}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTemplates(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
