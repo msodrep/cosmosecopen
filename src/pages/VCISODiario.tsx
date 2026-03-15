@@ -27,12 +27,20 @@ import {
   CheckSquare,
   MoreHorizontal,
   Eye,
+  Download,
+  AlertTriangle,
+  GraduationCap,
+  Search,
 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   reuniao: { label: 'Reunião', color: 'bg-blue-500/10 text-blue-500 border-blue-500/30', icon: Users },
   parecer: { label: 'Parecer', color: 'bg-purple-500/10 text-purple-500 border-purple-500/30', icon: FileCheck },
   aprovacao: { label: 'Aprovação', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30', icon: CheckSquare },
+  incidente: { label: 'Incidente', color: 'bg-destructive/10 text-destructive border-destructive/30', icon: AlertTriangle },
+  treinamento: { label: 'Treinamento', color: 'bg-amber-500/10 text-amber-500 border-amber-500/30', icon: GraduationCap },
+  auditoria: { label: 'Auditoria', color: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/30', icon: Search },
   outro: { label: 'Outro', color: 'bg-muted text-muted-foreground border-border', icon: MoreHorizontal },
 };
 
@@ -43,6 +51,24 @@ const emptyForm = {
   entry_date: format(new Date(), 'yyyy-MM-dd'),
   hours_spent: 1,
 };
+
+function exportCSV(entries: VCISOLogEntry[], monthLabel: string) {
+  const header = 'Data,Categoria,Título,Descrição,Horas';
+  const rows = entries.map(e => {
+    const cat = CATEGORY_CONFIG[e.category]?.label || e.category;
+    const desc = (e.description || '').replace(/"/g, '""');
+    return `${e.entry_date},"${cat}","${e.title}","${desc}",${e.hours_spent}`;
+  });
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `diario-vciso-${monthLabel}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast({ title: 'CSV exportado com sucesso' });
+}
 
 export default function VCISODiario() {
   const { data: entries, isLoading, createEntry, updateEntry, deleteEntry } = useVCISOLogEntries();
@@ -56,6 +82,7 @@ export default function VCISODiario() {
 
   const monthStart = startOfMonth(filterMonth);
   const monthEnd = endOfMonth(filterMonth);
+  const monthLabel = format(filterMonth, 'yyyy-MM');
 
   const filtered = useMemo(() => {
     if (!entries) return [];
@@ -68,9 +95,11 @@ export default function VCISODiario() {
 
   const monthStats = useMemo(() => {
     const totalHours = filtered.reduce((acc, e) => acc + (e.hours_spent || 0), 0);
-    const byCategory: Record<string, number> = {};
+    const byCategory: Record<string, { count: number; hours: number }> = {};
     filtered.forEach((e) => {
-      byCategory[e.category] = (byCategory[e.category] || 0) + 1;
+      if (!byCategory[e.category]) byCategory[e.category] = { count: 0, hours: 0 };
+      byCategory[e.category].count += 1;
+      byCategory[e.category].hours += e.hours_spent || 0;
     });
     return { totalEntries: filtered.length, totalHours, byCategory };
   }, [filtered]);
@@ -112,6 +141,11 @@ export default function VCISODiario() {
     setFilterMonth(d);
   };
 
+  // Hours by category for mini bar chart
+  const maxCategoryHours = useMemo(() => {
+    return Math.max(1, ...Object.values(monthStats.byCategory).map(v => v.hours));
+  }, [monthStats]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -125,13 +159,18 @@ export default function VCISODiario() {
             <p className="text-muted-foreground">Registro de atividades, reuniões e pareceres</p>
           </div>
         </div>
-        {canEdit ? (
-          <Button onClick={openCreate} className="gap-2">
-            <Plus className="w-4 h-4" /> Nova Entrada
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => exportCSV(filtered, monthLabel)} disabled={filtered.length === 0}>
+            <Download className="w-3.5 h-3.5" /> CSV
           </Button>
-        ) : isCLevel ? (
-          <Badge variant="outline" className="border-blue-500/30 text-blue-500 gap-1"><Eye className="w-3 h-3" /> Somente Leitura</Badge>
-        ) : null}
+          {canEdit ? (
+            <Button onClick={openCreate} className="gap-2">
+              <Plus className="w-4 h-4" /> Nova Entrada
+            </Button>
+          ) : isCLevel ? (
+            <Badge variant="outline" className="border-blue-500/30 text-blue-500 gap-1"><Eye className="w-3 h-3" /> Somente Leitura</Badge>
+          ) : null}
+        </div>
       </div>
 
       {/* Month Navigation + Stats */}
@@ -162,24 +201,32 @@ export default function VCISODiario() {
           </CardContent>
         </Card>
 
-        {/* Category breakdown */}
+        {/* Category breakdown with hours bar */}
         <Card className="border-border/50 flex-1">
           <CardContent className="p-4">
-            <p className="text-sm font-medium mb-3">Por Categoria</p>
+            <p className="text-sm font-medium mb-3">Horas por Categoria</p>
             <div className="space-y-2">
-              {Object.entries(monthStats.byCategory).map(([cat, count]) => {
-                const cfg = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.outro;
-                const CatIcon = cfg.icon;
-                return (
-                  <div key={cat} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CatIcon className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{cfg.label}</span>
+              {Object.entries(monthStats.byCategory)
+                .sort((a, b) => b[1].hours - a[1].hours)
+                .map(([cat, data]) => {
+                  const cfg = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.outro;
+                  const CatIcon = cfg.icon;
+                  const pct = (data.hours / maxCategoryHours) * 100;
+                  return (
+                    <div key={cat} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CatIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="text-xs">{cfg.label}</span>
+                        </div>
+                        <span className="text-xs font-mono text-muted-foreground">{data.hours.toFixed(1)}h ({data.count})</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className={cn('h-full rounded-full', cfg.color.split(' ')[0].replace('/10', '/60'))} style={{ width: `${pct}%` }} />
+                      </div>
                     </div>
-                    <Badge variant="secondary">{count}</Badge>
-                  </div>
-                );
-              })}
+                  );
+                })}
               {Object.keys(monthStats.byCategory).length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-2">Sem entradas neste mês</p>
               )}
@@ -196,10 +243,9 @@ export default function VCISODiario() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="reuniao">Reunião</SelectItem>
-            <SelectItem value="parecer">Parecer</SelectItem>
-            <SelectItem value="aprovacao">Aprovação</SelectItem>
-            <SelectItem value="outro">Outro</SelectItem>
+            {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
+              <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -215,9 +261,11 @@ export default function VCISODiario() {
             <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma entrada neste período</h3>
             <p className="text-muted-foreground mb-4">Registre atividades para acompanhar sua atuação</p>
-            <Button onClick={openCreate} variant="outline" className="gap-2">
-              <Plus className="w-4 h-4" /> Criar primeira entrada
-            </Button>
+            {canEdit && (
+              <Button onClick={openCreate} variant="outline" className="gap-2">
+                <Plus className="w-4 h-4" /> Criar primeira entrada
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -293,10 +341,9 @@ export default function VCISODiario() {
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="reuniao">Reunião</SelectItem>
-                    <SelectItem value="parecer">Parecer</SelectItem>
-                    <SelectItem value="aprovacao">Aprovação</SelectItem>
-                    <SelectItem value="outro">Outro</SelectItem>
+                    {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
+                      <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
