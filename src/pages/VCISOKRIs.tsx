@@ -126,9 +126,13 @@ export default function VCISOKRIs() {
             <p className="text-muted-foreground">Indicadores de risco de negócio com metas e tendências</p>
           </div>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="w-4 h-4" /> Novo KRI
-        </Button>
+        {canEdit ? (
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="w-4 h-4" /> Novo KRI
+          </Button>
+        ) : isCLevel ? (
+          <Badge variant="outline" className="border-blue-500/30 text-blue-500 gap-1"><Eye className="w-3 h-3" /> Somente Leitura</Badge>
+        ) : null}
       </div>
 
       {/* Stats */}
