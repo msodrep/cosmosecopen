@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertTriangle, Shield, CheckCircle2, Stamp, Clock, History, Filter } from 'lucide-react';
 import { useRisks, Risk, calculateRiskLevel, getRiskLevelLabel, TREATMENT_OPTIONS } from '@/hooks/useRisks';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAccessLogs } from '@/hooks/useAccessLogs';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
