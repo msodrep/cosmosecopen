@@ -11,6 +11,7 @@ import { FrameworkProvider } from "@/contexts/FrameworkContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { VendorLayout } from "@/components/layout/VendorLayout";
 import { PolicyLayout } from "@/components/layout/PolicyLayout";
+import { VCISOLayout } from "@/components/layout/VCISOLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AUTH_ROUTE } from "@/lib/constants";
 
