@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
-export type AppRole = 'admin' | 'auditor' | 'analyst';
+export type AppRole = 'admin' | 'auditor' | 'analyst' | 'clevel';
 
 export interface Permissions {
   role: AppRole;
