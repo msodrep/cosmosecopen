@@ -58,6 +58,12 @@ const QualificationTemplateBuilder = lazy(() => import("@/pages/QualificationTem
 const QualificationCampaigns = lazy(() => import("@/pages/QualificationCampaigns"));
 const VendorQualificationPortal = lazy(() => import("@/pages/VendorQualificationPortal"));
 const AcceptInvite = lazy(() => import("@/pages/AcceptInvite"));
+const VCISODashboard = lazy(() => import("@/pages/VCISODashboard"));
+const VCISORoadmap = lazy(() => import("@/pages/VCISORoadmap"));
+const VCISOKRIs = lazy(() => import("@/pages/VCISOKRIs"));
+const VCISODiario = lazy(() => import("@/pages/VCISODiario"));
+const VCISOContinuidade = lazy(() => import("@/pages/VCISOContinuidade"));
+const VCISORiscos = lazy(() => import("@/pages/VCISORiscos"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient({
