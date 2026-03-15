@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,15 +6,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, Shield, CheckCircle2, Stamp, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
-import { useRisks, Risk, calculateRiskLevel, getRiskLevelLabel, getRiskLevelColor, TREATMENT_OPTIONS } from '@/hooks/useRisks';
+import { AlertTriangle, Shield, CheckCircle2, Stamp, Clock, History, Filter } from 'lucide-react';
+import { useRisks, Risk, calculateRiskLevel, getRiskLevelLabel, TREATMENT_OPTIONS } from '@/hooks/useRisks';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAccessLogs } from '@/hooks/useAccessLogs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { RiskMatrix } from '@/components/riscos/RiskMatrix';
+import { cn } from '@/lib/utils';
 
 export default function VCISORiscos() {
   const { data: risks, isLoading } = useRisks({ filterByFramework: false });
@@ -23,6 +27,16 @@ export default function VCISORiscos() {
   const [acceptDialog, setAcceptDialog] = useState<Risk | null>(null);
   const [justification, setJustification] = useState('');
   const [accepting, setAccepting] = useState(false);
+  const [treatmentFilter, setTreatmentFilter] = useState<string>('all');
+  const [showTimeline, setShowTimeline] = useState(false);
+
+  // Fetch acceptance audit logs
+  const { data: accessLogs } = useAccessLogs();
+  const acceptanceLogs = useMemo(() => {
+    return (accessLogs || [])
+      .filter((log: any) => log.action === 'risk_formal_acceptance')
+      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [accessLogs]);
 
   const criticalRisks = (risks || []).filter(r => calculateRiskLevel(r.inherent_probability, r.inherent_impact) >= 20);
   const acceptedRisks = (risks || []).filter(r => r.treatment === 'aceitar');
@@ -31,11 +45,16 @@ export default function VCISORiscos() {
     return lvl >= 12 && lvl < 20;
   });
 
+  const filteredRisks = useMemo(() => {
+    if (!risks) return [];
+    if (treatmentFilter === 'all') return risks;
+    return risks.filter(r => r.treatment === treatmentFilter);
+  }, [risks, treatmentFilter]);
+
   const handleFormalAcceptance = async () => {
     if (!acceptDialog || !user) return;
     setAccepting(true);
     try {
-      // Update risk treatment to 'aceitar' with treatment_plan as justification
       const { error: riskError } = await supabase
         .from('risks')
         .update({
@@ -45,7 +64,6 @@ export default function VCISORiscos() {
         .eq('id', acceptDialog.id);
       if (riskError) throw riskError;
 
-      // Log the formal acceptance in access_logs via RPC
       await supabase.rpc('log_access_event', {
         _action: 'risk_formal_acceptance',
         _entity_type: 'risks',
@@ -60,6 +78,7 @@ export default function VCISORiscos() {
       });
 
       queryClient.invalidateQueries({ queryKey: ['risks'] });
+      queryClient.invalidateQueries({ queryKey: ['access-logs'] });
       toast({ title: 'Aceite formal registrado', description: `Risco ${acceptDialog.code} aceito formalmente com log de auditoria.` });
       setAcceptDialog(null);
       setJustification('');
@@ -74,14 +93,19 @@ export default function VCISORiscos() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-amber-500/10">
-          <AlertTriangle className="w-6 h-6 text-amber-500" />
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-amber-500/10">
+            <AlertTriangle className="w-6 h-6 text-amber-500" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold font-space">Registro de Riscos</h1>
+            <p className="text-muted-foreground text-sm">Registro central com aceite formal de riscos pelo C-Level</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold font-space">Registro de Riscos</h1>
-          <p className="text-muted-foreground text-sm">Registro central com aceite formal de riscos pelo C-Level</p>
-        </div>
+        <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowTimeline(true)}>
+          <History className="w-4 h-4" /> Timeline de Aceites
+        </Button>
       </div>
 
       {/* Stats */}
@@ -113,7 +137,7 @@ export default function VCISORiscos() {
         </Card>
       )}
 
-      {/* Top Critical + High risks table */}
+      {/* Executive attention table */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-space flex items-center gap-2">
@@ -136,6 +160,7 @@ export default function VCISORiscos() {
                     <TableHead>Código</TableHead>
                     <TableHead>Risco</TableHead>
                     <TableHead>Nível</TableHead>
+                    <TableHead>Residual</TableHead>
                     <TableHead>Tratamento</TableHead>
                     <TableHead className="text-right">Ação</TableHead>
                   </TableRow>
@@ -143,6 +168,10 @@ export default function VCISORiscos() {
                 <TableBody>
                   {[...criticalRisks, ...highRisks].map(risk => {
                     const level = calculateRiskLevel(risk.inherent_probability, risk.inherent_impact);
+                    const residualLevel = calculateRiskLevel(
+                      (risk as any).residual_probability || risk.inherent_probability,
+                      (risk as any).residual_impact || risk.inherent_impact
+                    );
                     const levelLabel = getRiskLevelLabel(level);
                     const isAccepted = risk.treatment === 'aceitar';
                     return (
@@ -155,9 +184,18 @@ export default function VCISORiscos() {
                           {risk.category && <p className="text-xs text-muted-foreground">{risk.category}</p>}
                         </TableCell>
                         <TableCell>
-                          <Badge className={`${level >= 20 ? 'bg-red-500' : 'bg-orange-500'} text-white`}>
+                          <Badge className={cn('text-white', level >= 20 ? 'bg-red-500' : 'bg-orange-500')}>
                             {level} — {levelLabel}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {residualLevel !== level ? (
+                            <Badge variant="secondary" className="text-xs">
+                              {residualLevel} — {getRiskLevelLabel(residualLevel)}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="text-xs">
@@ -191,16 +229,32 @@ export default function VCISORiscos() {
         </CardContent>
       </Card>
 
-      {/* All risks summary */}
+      {/* All risks with treatment filter */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-space">Todos os Riscos ({risks?.length || 0})</CardTitle>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <CardTitle className="text-base font-space">Todos os Riscos ({risks?.length || 0})</CardTitle>
+            <Select value={treatmentFilter} onValueChange={setTreatmentFilter}>
+              <SelectTrigger className="w-[180px] h-8">
+                <Filter className="w-3 h-3 mr-1" />
+                <SelectValue placeholder="Filtrar tratamento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {TREATMENT_OPTIONS.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <Skeleton className="h-40 w-full" />
-          ) : !risks || risks.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Cadastre riscos no módulo GRC para visualizá-los aqui.</p>
+          ) : filteredRisks.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
+              {risks?.length === 0 ? 'Cadastre riscos no módulo GRC para visualizá-los aqui.' : 'Nenhum risco com este tratamento.'}
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -214,7 +268,7 @@ export default function VCISORiscos() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {risks.map(risk => {
+                  {filteredRisks.map(risk => {
                     const level = calculateRiskLevel(risk.inherent_probability, risk.inherent_impact);
                     return (
                       <TableRow key={risk.id}>
@@ -234,6 +288,51 @@ export default function VCISORiscos() {
           )}
         </CardContent>
       </Card>
+
+      {/* Acceptance Timeline Dialog */}
+      <Dialog open={showTimeline} onOpenChange={setShowTimeline}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-space">
+              <History className="w-5 h-5 text-amber-500" />
+              Timeline de Aceites Formais
+            </DialogTitle>
+            <DialogDescription>Histórico de todos os aceites formais de risco registrados.</DialogDescription>
+          </DialogHeader>
+          {acceptanceLogs.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Nenhum aceite formal registrado ainda.</p>
+          ) : (
+            <div className="relative pl-6 space-y-4">
+              <div className="absolute left-2 top-2 bottom-2 w-px bg-border" />
+              {acceptanceLogs.map((log: any) => {
+                const details = log.details || {};
+                return (
+                  <div key={log.id} className="relative">
+                    <div className="absolute -left-[18px] top-1 w-3 h-3 rounded-full bg-amber-500 border-2 border-background" />
+                    <div className="bg-muted/30 rounded-lg p-3 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge variant="outline" className="font-mono text-xs">{details.risk_code || '—'}</Badge>
+                        <span className="text-[10px] text-muted-foreground">
+                          {format(parseISO(log.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium">{details.risk_title || 'Risco'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Nível: <strong>{details.risk_level}</strong> • Por: <strong>{details.accepted_by}</strong>
+                      </p>
+                      {details.justification && (
+                        <p className="text-xs text-muted-foreground italic border-l-2 border-amber-500/30 pl-2 mt-1">
+                          "{details.justification}"
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Formal Acceptance Dialog */}
       <Dialog open={!!acceptDialog} onOpenChange={() => setAcceptDialog(null)}>
