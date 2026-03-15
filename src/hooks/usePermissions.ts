@@ -10,6 +10,7 @@ export interface Permissions {
   isAdmin: boolean;
   isAuditor: boolean;
   isAnalyst: boolean;
+  isCLevel: boolean;
   /** Can create, edit, delete records */
   canEdit: boolean;
   /** Can perform destructive bulk operations */
