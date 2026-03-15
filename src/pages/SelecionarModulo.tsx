@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, Building, ArrowRight, ArrowLeft, Sparkles, Loader2, FileText } from 'lucide-react';
+import { Shield, Building, ArrowRight, ArrowLeft, Sparkles, Loader2, FileText, Eye } from 'lucide-react';
 import { StarField } from '@/components/ui/star-field';
 import { CosmoSecLogo } from '@/components/ui/CosmoSecLogo';
 import { useAuth } from '@/contexts/AuthContext';
