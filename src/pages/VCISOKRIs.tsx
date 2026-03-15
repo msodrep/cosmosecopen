@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useKRIs, type KRI } from '@/hooks/useKRIs';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   Activity,
   Plus,
@@ -22,6 +23,7 @@ import {
   AlertTriangle,
   Shield,
   Target,
+  Eye,
 } from 'lucide-react';
 
 const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
@@ -51,6 +53,7 @@ const emptyForm = {
 
 export default function VCISOKRIs() {
   const { data: kris, isLoading, createKRI, updateKRI, deleteKRI } = useKRIs();
+  const { canEdit, isCLevel } = usePermissions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingKRI, setEditingKRI] = useState<KRI | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -123,9 +126,13 @@ export default function VCISOKRIs() {
             <p className="text-muted-foreground">Indicadores de risco de negócio com metas e tendências</p>
           </div>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="w-4 h-4" /> Novo KRI
-        </Button>
+        {canEdit ? (
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="w-4 h-4" /> Novo KRI
+          </Button>
+        ) : isCLevel ? (
+          <Badge variant="outline" className="border-blue-500/30 text-blue-500 gap-1"><Eye className="w-3 h-3" /> Somente Leitura</Badge>
+        ) : null}
       </div>
 
       {/* Stats */}
@@ -203,12 +210,16 @@ export default function VCISOKRIs() {
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                       <Badge variant="outline" className={cn('text-xs', sevCfg.color)}>{sevCfg.label}</Badge>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(kri)}>
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteKRI.mutate(kri.id)}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                      {canEdit && (
+                        <>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(kri)}>
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteKRI.mutate(kri.id)}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardHeader>

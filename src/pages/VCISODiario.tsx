@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useVCISOLogEntries, type VCISOLogEntry } from '@/hooks/useVCISOLogEntries';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   BookOpen,
   Plus,
@@ -25,6 +26,7 @@ import {
   FileCheck,
   CheckSquare,
   MoreHorizontal,
+  Eye,
 } from 'lucide-react';
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -44,6 +46,7 @@ const emptyForm = {
 
 export default function VCISODiario() {
   const { data: entries, isLoading, createEntry, updateEntry, deleteEntry } = useVCISOLogEntries();
+  const { canEdit, isCLevel } = usePermissions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<VCISOLogEntry | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -122,9 +125,13 @@ export default function VCISODiario() {
             <p className="text-muted-foreground">Registro de atividades, reuniões e pareceres</p>
           </div>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="w-4 h-4" /> Nova Entrada
-        </Button>
+        {canEdit ? (
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="w-4 h-4" /> Nova Entrada
+          </Button>
+        ) : isCLevel ? (
+          <Badge variant="outline" className="border-blue-500/30 text-blue-500 gap-1"><Eye className="w-3 h-3" /> Somente Leitura</Badge>
+        ) : null}
       </div>
 
       {/* Month Navigation + Stats */}
@@ -247,14 +254,16 @@ export default function VCISODiario() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(entry)}>
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteEntry.mutate(entry.id)}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
+                    {canEdit && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(entry)}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteEntry.mutate(entry.id)}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRoadmapItems, type RoadmapItem } from '@/hooks/useRoadmapItems';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   Map,
   Plus,
@@ -25,6 +26,7 @@ import {
   AlertTriangle,
   Pause,
   Target,
+  Eye,
 } from 'lucide-react';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -63,6 +65,7 @@ const emptyForm = {
 
 export default function VCISORoadmap() {
   const { data: items, isLoading, createItem, updateItem, deleteItem } = useRoadmapItems();
+  const { canEdit, isCLevel } = usePermissions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<RoadmapItem | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -160,9 +163,13 @@ export default function VCISORoadmap() {
             <p className="text-muted-foreground">Projetos de segurança organizados por trimestre</p>
           </div>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="w-4 h-4" /> Novo Item
-        </Button>
+        {canEdit ? (
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="w-4 h-4" /> Novo Item
+          </Button>
+        ) : isCLevel ? (
+          <Badge variant="outline" className="border-blue-500/30 text-blue-500 gap-1"><Eye className="w-3 h-3" /> Somente Leitura</Badge>
+        ) : null}
       </div>
 
       {/* Stats */}
@@ -257,14 +264,16 @@ export default function VCISORoadmap() {
                             </Badge>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}>
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteItem.mutate(item.id)}>
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
+                        {canEdit && (
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteItem.mutate(item.id)}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                       {/* Timeline bar */}
                       <div className="h-2 bg-muted rounded-full overflow-hidden">

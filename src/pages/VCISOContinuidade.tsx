@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ShieldCheck, Plus, Calendar, CheckCircle2, Clock, XCircle, FileText, Trash2, Pencil } from 'lucide-react';
+import { ShieldCheck, Plus, Calendar, CheckCircle2, Clock, XCircle, FileText, Trash2, Pencil, Eye } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useContinuityTests, ContinuityTest, TEST_TYPES, TEST_STATUSES } from '@/hooks/useContinuityTests';
 import { format, parseISO, isPast, isFuture } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -34,6 +35,7 @@ const emptyForm = {
 
 export default function VCISOContinuidade() {
   const { data: tests, isLoading, createTest, updateTest, deleteTest } = useContinuityTests();
+  const { canEdit, isCLevel } = usePermissions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTest, setEditingTest] = useState<ContinuityTest | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -92,9 +94,13 @@ export default function VCISOContinuidade() {
             <p className="text-muted-foreground text-sm">Calendário de testes de BIA, restore e tabletop exercises</p>
           </div>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="w-4 h-4" /> Agendar Teste
-        </Button>
+        {canEdit ? (
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="w-4 h-4" /> Agendar Teste
+          </Button>
+        ) : isCLevel ? (
+          <Badge variant="outline" className="border-blue-500/30 text-blue-500 gap-1"><Eye className="w-3 h-3" /> Somente Leitura</Badge>
+        ) : null}
       </div>
 
       {/* Stats */}
@@ -175,14 +181,16 @@ export default function VCISOContinuidade() {
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-1 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(test)}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteTest.mutate(test.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {canEdit && (
+                      <div className="flex gap-1 shrink-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(test)}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteTest.mutate(test.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
