@@ -15,8 +15,19 @@ export interface KRI {
   trend: string;
   severity: string;
   measured_at: string;
+  threshold_warning: number | null;
+  threshold_critical: number | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface KRIHistoryEntry {
+  id: string;
+  kri_id: string;
+  organization_id: string;
+  value: number;
+  recorded_at: string;
+  created_at: string;
 }
 
 export function useKRIs() {
@@ -39,7 +50,7 @@ export function useKRIs() {
   });
 
   const createKRI = useMutation({
-    mutationFn: async (kri: Omit<KRI, 'id' | 'organization_id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (kri: Omit<KRI, 'id' | 'organization_id' | 'created_at' | 'updated_at' | 'threshold_warning' | 'threshold_critical'>) => {
       const { data, error } = await supabase
         .from('key_risk_indicators' as any)
         .insert({ ...kri, organization_id: organization!.id } as any)
@@ -86,4 +97,42 @@ export function useKRIs() {
   });
 
   return { ...query, createKRI, updateKRI, deleteKRI };
+}
+
+export function useKRIHistory(kriId: string | null) {
+  const { organization } = useOrganization();
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ['kri-history', kriId],
+    queryFn: async () => {
+      if (!kriId || !organization?.id) return [];
+      const { data, error } = await supabase
+        .from('kri_history' as any)
+        .select('*')
+        .eq('kri_id', kriId)
+        .eq('organization_id', organization.id)
+        .order('recorded_at', { ascending: true })
+        .limit(12);
+      if (error) throw error;
+      return (data || []) as unknown as KRIHistoryEntry[];
+    },
+    enabled: !!kriId && !!organization?.id,
+  });
+
+  const recordValue = useMutation({
+    mutationFn: async ({ kriId, value }: { kriId: string; value: number }) => {
+      const { error } = await supabase
+        .from('kri_history' as any)
+        .insert({ kri_id: kriId, organization_id: organization!.id, value } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kri-history'] });
+      toast({ title: 'Valor histórico registrado' });
+    },
+    onError: () => toast({ title: 'Erro ao registrar valor', variant: 'destructive' }),
+  });
+
+  return { ...query, recordValue };
 }

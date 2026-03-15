@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { useKRIs, type KRI } from '@/hooks/useKRIs';
+import { useKRIs, useKRIHistory, type KRI } from '@/hooks/useKRIs';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
   Activity,
@@ -25,8 +25,11 @@ import {
   Eye,
   Sparkles,
   Zap,
+  BarChart3,
+  Save,
 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
   low: { label: 'Baixo', color: 'bg-blue-500/10 text-blue-500 border-blue-500/30' },
@@ -62,6 +65,92 @@ const emptyForm = {
   framework_id: null as string | null,
 };
 
+// Mini sparkline component
+function Sparkline({ data, color = 'text-primary' }: { data: number[]; color?: string }) {
+  if (data.length < 2) return null;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const width = 80;
+  const height = 24;
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((v - min) / range) * (height - 4) - 2;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <svg width={width} height={height} className={cn('inline-block', color)}>
+      <polyline
+        points={points}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Last point dot */}
+      {data.length > 0 && (() => {
+        const lastX = width;
+        const lastY = height - ((data[data.length - 1] - min) / range) * (height - 4) - 2;
+        return <circle cx={lastX} cy={lastY} r="2" fill="currentColor" />;
+      })()}
+    </svg>
+  );
+}
+
+// KRI History Panel component
+function KRIHistoryPanel({ kri, canEdit }: { kri: KRI; canEdit: boolean }) {
+  const { data: history, recordValue } = useKRIHistory(kri.id);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium flex items-center gap-1.5">
+          <BarChart3 className="w-4 h-4 text-muted-foreground" />
+          Histórico de valores
+        </h4>
+        {canEdit && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1 text-xs"
+            onClick={() => recordValue.mutate({ kriId: kri.id, value: kri.current_value })}
+          >
+            <Save className="w-3 h-3" /> Registrar Valor Atual
+          </Button>
+        )}
+      </div>
+
+      {(!history || history.length === 0) ? (
+        <p className="text-xs text-muted-foreground text-center py-4">
+          Nenhum histórico registrado. Clique em "Registrar Valor Atual" para começar a rastrear.
+        </p>
+      ) : (
+        <>
+          <div className="flex items-center gap-3">
+            <Sparkline
+              data={history.map(h => h.value)}
+              color={kri.trend === 'up' ? 'text-destructive' : kri.trend === 'down' ? 'text-emerald-500' : 'text-muted-foreground'}
+            />
+            <span className="text-xs text-muted-foreground">
+              {history.length} registros
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-1 max-h-[120px] overflow-y-auto">
+            {history.slice().reverse().map(h => (
+              <div key={h.id} className="text-[10px] text-muted-foreground bg-muted/30 rounded px-1.5 py-0.5 flex justify-between">
+                <span>{h.value}{kri.unit}</span>
+                <span>{format(parseISO(h.recorded_at), 'dd/MM', { locale: ptBR })}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function VCISOKRIs() {
   const { data: kris, isLoading, createKRI, updateKRI, deleteKRI } = useKRIs();
   const { canEdit, isCLevel } = usePermissions();
@@ -70,6 +159,7 @@ export default function VCISOKRIs() {
   const [form, setForm] = useState(emptyForm);
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [expandedKRI, setExpandedKRI] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (!kris) return [];
@@ -140,11 +230,8 @@ export default function VCISOKRIs() {
     return 'bg-destructive';
   };
 
-  // Check if a KRI is in alert (exceeds target in wrong direction)
   const isAlert = (kri: KRI) => {
-    // For "lower is better" KRIs (unit is 'un' or 'dias'), current > target is bad
     if ((kri.unit === 'un' || kri.unit === 'dias') && kri.current_value > kri.target_value) return true;
-    // For percentage KRIs, current < 50% of target is bad
     if (kri.unit === '%' && kri.target_value > 0 && kri.current_value < kri.target_value * 0.5) return true;
     return false;
   };
@@ -159,7 +246,7 @@ export default function VCISOKRIs() {
           </div>
           <div>
             <h1 className="text-2xl font-bold font-space">Key Risk Indicators</h1>
-            <p className="text-muted-foreground">Indicadores de risco de negócio com metas e tendências</p>
+            <p className="text-muted-foreground">Indicadores de risco com metas, tendências e histórico</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -249,9 +336,10 @@ export default function VCISOKRIs() {
             const TrendIcon = TREND_ICONS[kri.trend] || Minus;
             const progressPct = kri.target_value > 0 ? Math.min(100, Math.round((kri.current_value / kri.target_value) * 100)) : 0;
             const alerting = isAlert(kri);
+            const isExpanded = expandedKRI === kri.id;
 
             return (
-              <Card key={kri.id} className={cn('border-border/50', alerting && 'border-destructive/50 shadow-destructive/10 shadow-sm')}>
+              <Card key={kri.id} className={cn('border-border/50 transition-all', alerting && 'border-destructive/50 shadow-destructive/10 shadow-sm')}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
@@ -267,6 +355,9 @@ export default function VCISOKRIs() {
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                       <Badge variant="outline" className={cn('text-xs', sevCfg.color)}>{sevCfg.label}</Badge>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpandedKRI(isExpanded ? null : kri.id)}>
+                        <BarChart3 className="w-3 h-3" />
+                      </Button>
                       {canEdit && (
                         <>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(kri)}>
@@ -303,6 +394,13 @@ export default function VCISOKRIs() {
                       <div className={cn('h-full rounded-full transition-all', getProgressColor(kri))} style={{ width: `${progressPct}%` }} />
                     </div>
                   </div>
+
+                  {/* Expanded History Panel */}
+                  {isExpanded && (
+                    <div className="pt-3 border-t border-border/50">
+                      <KRIHistoryPanel kri={kri} canEdit={canEdit} />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
