@@ -46,6 +46,7 @@ const emptyForm = {
 
 export default function VCISODiario() {
   const { data: entries, isLoading, createEntry, updateEntry, deleteEntry } = useVCISOLogEntries();
+  const { canEdit, isCLevel } = usePermissions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<VCISOLogEntry | null>(null);
   const [form, setForm] = useState(emptyForm);
