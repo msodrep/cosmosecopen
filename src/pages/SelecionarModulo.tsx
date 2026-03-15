@@ -37,6 +37,15 @@ const modules = [
     bgGlow: 'bg-emerald-500/20',
     route: '/policies',
   },
+  {
+    id: 'vciso',
+    title: 'vCISO',
+    description: 'Torre de Controle para Executivos de Segurança. Painel C-Level, KRIs, roadmap estratégico, diário de bordo e testes de continuidade.',
+    icon: Eye,
+    colorClass: 'from-amber-500/20 to-amber-500/5 border-amber-500/30 text-amber-500',
+    bgGlow: 'bg-amber-500/20',
+    route: '/vciso',
+  },
 ];
 
 export default function SelecionarModulo() {

@@ -174,6 +174,17 @@ const App = () => (
                         <Route path="/policies/configuracoes" element={<Configuracoes />} />
                       </Route>
 
+                      {/* Módulo vCISO (Torre de Controle) */}
+                      <Route element={<VCISOLayout />}>
+                        <Route path="/vciso" element={<VCISODashboard />} />
+                        <Route path="/vciso/roadmap" element={<VCISORoadmap />} />
+                        <Route path="/vciso/kris" element={<VCISOKRIs />} />
+                        <Route path="/vciso/diario" element={<VCISODiario />} />
+                        <Route path="/vciso/continuidade" element={<VCISOContinuidade />} />
+                        <Route path="/vciso/riscos" element={<VCISORiscos />} />
+                        <Route path="/vciso/configuracoes" element={<Configuracoes />} />
+                      </Route>
+
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
