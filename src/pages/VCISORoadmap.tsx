@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRoadmapItems, type RoadmapItem } from '@/hooks/useRoadmapItems';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   Map,
   Plus,
@@ -25,6 +26,7 @@ import {
   AlertTriangle,
   Pause,
   Target,
+  Eye,
 } from 'lucide-react';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
