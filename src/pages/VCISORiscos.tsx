@@ -30,13 +30,20 @@ export default function VCISORiscos() {
   const [treatmentFilter, setTreatmentFilter] = useState<string>('all');
   const [showTimeline, setShowTimeline] = useState(false);
 
-  // Fetch acceptance audit logs
-  const { data: accessLogs } = useAccessLogs();
-  const acceptanceLogs = useMemo(() => {
-    return (accessLogs || [])
-      .filter((log: any) => log.action === 'risk_formal_acceptance')
-      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [accessLogs]);
+  // Fetch acceptance audit logs directly
+  const { data: acceptanceLogs = [] } = useQuery({
+    queryKey: ['risk-acceptance-logs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('access_logs')
+        .select('*')
+        .eq('action', 'risk_formal_acceptance')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const criticalRisks = (risks || []).filter(r => calculateRiskLevel(r.inherent_probability, r.inherent_impact) >= 20);
   const acceptedRisks = (risks || []).filter(r => r.treatment === 'aceitar');
