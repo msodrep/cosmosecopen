@@ -154,8 +154,12 @@ function KRIHistoryPanel({ kri, canEdit }: { kri: KRI; canEdit: boolean }) {
 }
 
 export default function VCISOKRIs() {
-  const { data: kris, isLoading, createKRI, updateKRI, deleteKRI } = useKRIs();
-  const { canEdit, isCLevel } = usePermissions();
+  const { data: kris, isLoading: _isLoading, createKRI, updateKRI, deleteKRI } = useKRIs();
+  const { canEdit: _canEdit, isCLevel } = usePermissions();
+  const { isDemo } = (useOutletContext() || {}) as { isDemo?: boolean };
+  const canEdit = isDemo ? false : _canEdit;
+  const isLoading = isDemo ? false : _isLoading;
+  const allKRIs = isDemo ? (MOCK_KRIS as unknown as KRI[]) : (kris || []);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingKRI, setEditingKRI] = useState<KRI | null>(null);
   const [form, setForm] = useState(emptyForm);
