@@ -91,13 +91,12 @@ export default function VCISODiario() {
   const monthLabel = format(filterMonth, 'yyyy-MM');
 
   const filtered = useMemo(() => {
-    if (!entries) return [];
-    return entries.filter((e) => {
+    return allEntries.filter((e) => {
       const dateMatch = isWithinInterval(new Date(e.entry_date), { start: monthStart, end: monthEnd });
       const catMatch = filterCategory === 'all' || e.category === filterCategory;
       return dateMatch && catMatch;
     });
-  }, [entries, filterCategory, monthStart, monthEnd]);
+  }, [allEntries, filterCategory, monthStart, monthEnd]);
 
   const monthStats = useMemo(() => {
     const totalHours = filtered.reduce((acc, e) => acc + (e.hours_spent || 0), 0);

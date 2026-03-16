@@ -172,14 +172,13 @@ export default function VCISOKRIs() {
   }, [allKRIs, filterSeverity]);
 
   const stats = useMemo(() => {
-    if (!kris) return { total: 0, critical: 0, offTarget: 0, onTarget: 0 };
     return {
-      total: kris.length,
-      critical: kris.filter((k) => k.severity === 'critical').length,
-      offTarget: kris.filter((k) => Math.abs(k.current_value - k.target_value) > k.target_value * 0.2).length,
-      onTarget: kris.filter((k) => Math.abs(k.current_value - k.target_value) <= k.target_value * 0.2).length,
+      total: allKRIs.length,
+      critical: allKRIs.filter((k) => k.severity === 'critical').length,
+      offTarget: allKRIs.filter((k) => Math.abs(k.current_value - k.target_value) > k.target_value * 0.2).length,
+      onTarget: allKRIs.filter((k) => Math.abs(k.current_value - k.target_value) <= k.target_value * 0.2).length,
     };
-  }, [kris]);
+  }, [allKRIs]);
 
   const openCreate = () => {
     setEditingKRI(null);

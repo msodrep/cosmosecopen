@@ -50,18 +50,17 @@ export default function VCISORiscos() {
     },
   });
 
-  const criticalRisks = (risks || []).filter(r => calculateRiskLevel(r.inherent_probability, r.inherent_impact) >= 20);
-  const acceptedRisks = (risks || []).filter(r => r.treatment === 'aceitar');
-  const highRisks = (risks || []).filter(r => {
+  const criticalRisks = allRisks.filter(r => calculateRiskLevel(r.inherent_probability, r.inherent_impact) >= 20);
+  const acceptedRisks = allRisks.filter(r => r.treatment === 'aceitar');
+  const highRisks = allRisks.filter(r => {
     const lvl = calculateRiskLevel(r.inherent_probability, r.inherent_impact);
     return lvl >= 12 && lvl < 20;
   });
 
   const filteredRisks = useMemo(() => {
-    if (!risks) return [];
-    if (treatmentFilter === 'all') return risks;
-    return risks.filter(r => r.treatment === treatmentFilter);
-  }, [risks, treatmentFilter]);
+    if (treatmentFilter === 'all') return allRisks;
+    return allRisks.filter(r => r.treatment === treatmentFilter);
+  }, [allRisks, treatmentFilter]);
 
   const handleFormalAcceptance = async () => {
     if (!acceptDialog || !user) return;

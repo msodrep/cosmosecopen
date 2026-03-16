@@ -84,13 +84,13 @@ export default function VCISOContinuidade() {
     setDialogOpen(false);
   };
 
-  const filtered = (tests || []).filter(t => filter === 'all' || t.status === filter);
+  const filtered = allTests.filter(t => filter === 'all' || t.status === filter);
 
   const stats = {
-    total: tests?.length || 0,
-    scheduled: tests?.filter(t => t.status === 'agendado').length || 0,
-    completed: tests?.filter(t => t.status === 'concluido').length || 0,
-    overdue: tests?.filter(t => t.status === 'agendado' && isPast(parseISO(t.scheduled_date))).length || 0,
+    total: allTests.length,
+    scheduled: allTests.filter(t => t.status === 'agendado').length,
+    completed: allTests.filter(t => t.status === 'concluido').length,
+    overdue: allTests.filter(t => t.status === 'agendado' && isPast(parseISO(t.scheduled_date))).length,
   };
 
   // Calendar data
