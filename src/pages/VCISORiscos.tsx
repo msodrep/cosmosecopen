@@ -264,7 +264,7 @@ export default function VCISORiscos() {
             <Skeleton className="h-40 w-full" />
           ) : filteredRisks.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              {risks?.length === 0 ? 'Cadastre riscos no módulo GRC para visualizá-los aqui.' : 'Nenhum risco com este tratamento.'}
+              {allRisks.length === 0 ? 'Cadastre riscos no módulo GRC para visualizá-los aqui.' : 'Nenhum risco com este tratamento.'}
             </p>
           ) : (
             <div className="overflow-x-auto">
