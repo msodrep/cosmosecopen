@@ -16,10 +16,11 @@ import { SecurityPostureScore } from '@/components/dashboard/SecurityPostureScor
 import { TopThreatsWidget } from '@/components/dashboard/TopThreatsWidget';
 import { ComplianceRadarChart } from '@/components/dashboard/ComplianceRadarChart';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { startOfMonth, endOfMonth, isWithinInterval, isPast, parseISO } from 'date-fns';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { MOCK_DASHBOARD, MOCK_KRIS, MOCK_ROADMAP, MOCK_CONTINUITY_TESTS } from '@/lib/vciso-mock-data';
 import {
   AlertTriangle,
   TrendingUp,
@@ -41,6 +42,7 @@ export default function VCISODashboard() {
   const navigate = useNavigate();
   const { organization } = useOrganization();
   const { isCLevel } = usePermissions();
+  const { isDemo } = (useOutletContext() || {}) as { isDemo?: boolean };
   const assessmentsQuery = useAssessments();
   const risksQuery = useRisks({ filterByFramework: false });
   const controlsQuery = useControls();
@@ -54,12 +56,12 @@ export default function VCISODashboard() {
   const risks = risksQuery.data || [];
   const controls = controlsQuery.data || [];
   const actionPlans = actionPlansQuery.data || [];
-  const kris = krisQuery.data || [];
-  const roadmapItems = roadmapQuery.data || [];
-  const tests = testsQuery.data || [];
+  const kris = isDemo ? MOCK_KRIS : (krisQuery.data || []);
+  const roadmapItems = isDemo ? MOCK_ROADMAP : (roadmapQuery.data || []);
+  const tests = isDemo ? MOCK_CONTINUITY_TESTS : (testsQuery.data || []);
   const logEntries = logQuery.data || [];
 
-  const isLoading = assessmentsQuery.isLoading || risksQuery.isLoading || controlsQuery.isLoading || actionPlansQuery.isLoading;
+  const isLoading = isDemo ? false : (assessmentsQuery.isLoading || risksQuery.isLoading || controlsQuery.isLoading || actionPlansQuery.isLoading);
 
   // Metrics
   const overdueCount = actionPlans.filter(
