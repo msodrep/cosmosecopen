@@ -168,9 +168,8 @@ export default function VCISOKRIs() {
   const [expandedKRI, setExpandedKRI] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    if (!kris) return [];
-    return kris.filter((k) => filterSeverity === 'all' || k.severity === filterSeverity);
-  }, [kris, filterSeverity]);
+    return allKRIs.filter((k) => filterSeverity === 'all' || k.severity === filterSeverity);
+  }, [allKRIs, filterSeverity]);
 
   const stats = useMemo(() => {
     if (!kris) return { total: 0, critical: 0, offTarget: 0, onTarget: 0 };
