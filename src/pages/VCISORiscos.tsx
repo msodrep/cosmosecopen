@@ -122,7 +122,7 @@ export default function VCISORiscos() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total de Riscos', value: risks?.length || 0, color: 'text-foreground' },
+          { label: 'Total de Riscos', value: allRisks.length, color: 'text-foreground' },
           { label: 'Críticos', value: criticalRisks.length, color: 'text-red-500' },
           { label: 'Altos', value: highRisks.length, color: 'text-orange-500' },
           { label: 'Aceitos Formalmente', value: acceptedRisks.length, color: 'text-amber-500' },
