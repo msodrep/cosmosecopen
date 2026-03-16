@@ -1203,6 +1203,7 @@ export type Database = {
           logo_url: string | null
           name: string
           updated_at: string
+          vciso_enabled: boolean
         }
         Insert: {
           created_at?: string
@@ -1211,6 +1212,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           updated_at?: string
+          vciso_enabled?: boolean
         }
         Update: {
           created_at?: string
@@ -1219,6 +1221,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           updated_at?: string
+          vciso_enabled?: boolean
         }
         Relationships: []
       }
@@ -3592,6 +3595,7 @@ export type Database = {
           logo_url: string | null
           name: string
           updated_at: string
+          vciso_enabled: boolean
         }
         SetofOptions: {
           from: "*"

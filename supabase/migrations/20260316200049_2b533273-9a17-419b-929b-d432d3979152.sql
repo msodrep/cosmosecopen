@@ -1,0 +1,1 @@
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS vciso_enabled BOOLEAN NOT NULL DEFAULT false;
