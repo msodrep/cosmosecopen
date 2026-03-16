@@ -11,6 +11,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useKRIs, useKRIHistory, type KRI } from '@/hooks/useKRIs';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useOutletContext } from 'react-router-dom';
+import { MOCK_KRIS } from '@/lib/vciso-mock-data';
 import {
   Activity,
   Plus,
