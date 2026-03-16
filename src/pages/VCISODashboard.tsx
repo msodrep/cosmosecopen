@@ -16,10 +16,11 @@ import { SecurityPostureScore } from '@/components/dashboard/SecurityPostureScor
 import { TopThreatsWidget } from '@/components/dashboard/TopThreatsWidget';
 import { ComplianceRadarChart } from '@/components/dashboard/ComplianceRadarChart';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { startOfMonth, endOfMonth, isWithinInterval, isPast, parseISO } from 'date-fns';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { MOCK_DASHBOARD, MOCK_KRIS, MOCK_ROADMAP, MOCK_CONTINUITY_TESTS } from '@/lib/vciso-mock-data';
 import {
   AlertTriangle,
   TrendingUp,
@@ -41,6 +42,7 @@ export default function VCISODashboard() {
   const navigate = useNavigate();
   const { organization } = useOrganization();
   const { isCLevel } = usePermissions();
+  const { isDemo } = (useOutletContext() || {}) as { isDemo?: boolean };
   const assessmentsQuery = useAssessments();
   const risksQuery = useRisks({ filterByFramework: false });
   const controlsQuery = useControls();
@@ -54,31 +56,31 @@ export default function VCISODashboard() {
   const risks = risksQuery.data || [];
   const controls = controlsQuery.data || [];
   const actionPlans = actionPlansQuery.data || [];
-  const kris = krisQuery.data || [];
-  const roadmapItems = roadmapQuery.data || [];
-  const tests = testsQuery.data || [];
+  const kris = isDemo ? MOCK_KRIS : (krisQuery.data || []);
+  const roadmapItems = isDemo ? MOCK_ROADMAP : (roadmapQuery.data || []);
+  const tests = isDemo ? MOCK_CONTINUITY_TESTS : (testsQuery.data || []);
   const logEntries = logQuery.data || [];
 
-  const isLoading = assessmentsQuery.isLoading || risksQuery.isLoading || controlsQuery.isLoading || actionPlansQuery.isLoading;
+  const isLoading = isDemo ? false : (assessmentsQuery.isLoading || risksQuery.isLoading || controlsQuery.isLoading || actionPlansQuery.isLoading);
 
   // Metrics
-  const overdueCount = actionPlans.filter(
+  const overdueCount = isDemo ? MOCK_DASHBOARD.overdueCount : actionPlans.filter(
     (p) => p.status !== 'done' && p.due_date && new Date(p.due_date) < new Date()
   ).length;
 
-  const criticalRisks = risks.filter(
-    (r) => calculateRiskLevel(r.inherent_probability, r.inherent_impact) >= 20
-  );
+  const criticalRisks = isDemo
+    ? Array(MOCK_DASHBOARD.criticalRisks).fill(null)
+    : risks.filter((r) => calculateRiskLevel(r.inherent_probability, r.inherent_impact) >= 20);
 
   const completedPlans = actionPlans.filter((p) => p.status === 'done').length;
   const totalPlans = actionPlans.length;
-  const planCompletionRate = totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0;
+  const planCompletionRate = isDemo ? MOCK_DASHBOARD.planCompletionRate : (totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0);
 
   const conformeCount = assessments.filter((a) => a.status === 'conforme').length;
-  const complianceRate = assessments.length > 0
-    ? Math.round((conformeCount / assessments.length) * 100) : 0;
+  const complianceRate = isDemo ? MOCK_DASHBOARD.complianceRate : (assessments.length > 0
+    ? Math.round((conformeCount / assessments.length) * 100) : 0);
 
-  const acceptedRisks = risks.filter(r => r.treatment === 'aceitar');
+  const acceptedRisks = isDemo ? Array(MOCK_DASHBOARD.acceptedRisks).fill(null) : risks.filter(r => r.treatment === 'aceitar');
 
   // KRIs - top 3 critical
   const topKRIs = useMemo(() => {
@@ -115,13 +117,14 @@ export default function VCISODashboard() {
 
   // vCISO hours this month
   const monthHours = useMemo(() => {
+    if (isDemo) return MOCK_DASHBOARD.monthHours;
     const now = new Date();
     const start = startOfMonth(now);
     const end = endOfMonth(now);
     return logEntries
       .filter(e => isWithinInterval(new Date(e.entry_date), { start, end }))
       .reduce((acc, e) => acc + (e.hours_spent || 0), 0);
-  }, [logEntries]);
+  }, [logEntries, isDemo]);
 
   const TrendIcon = ({ trend }: { trend: string }) => {
     if (trend === 'up') return <TrendingUp className="w-3.5 h-3.5 text-destructive" />;

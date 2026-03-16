@@ -9,6 +9,8 @@ import { NotificationCenter } from './NotificationCenter';
 import { StarField } from '@/components/ui/star-field';
 import { PageTransition } from './PageTransition';
 import { AUTH_ROUTE } from '@/lib/constants';
+import { useVCISOAccess } from '@/hooks/useVCISOAccess';
+import { VCISOPaywall } from './VCISOPaywall';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,9 +33,10 @@ const routeTitles: Record<string, string> = {
 export function VCISOLayout() {
   const { user, loading: authLoading } = useAuth();
   const { organization, organizations, loading: orgLoading } = useOrganization();
+  const { hasAccess, isLoading: accessLoading } = useVCISOAccess();
   const location = useLocation();
 
-  if (authLoading || orgLoading) {
+  if (authLoading || orgLoading || accessLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -88,10 +91,15 @@ export function VCISOLayout() {
             </Breadcrumb>
             <NotificationCenter />
           </header>
-          <main className="flex-1 p-6 overflow-auto">
-            <PageTransition>
-              <Outlet />
-            </PageTransition>
+          <main className="flex-1 relative overflow-hidden">
+            {!hasAccess && <VCISOPaywall />}
+            <div
+              className={`h-full overflow-auto p-6 ${!hasAccess ? 'pointer-events-none select-none' : ''}`}
+            >
+              <PageTransition>
+                <Outlet context={{ isDemo: !hasAccess }} />
+              </PageTransition>
+            </div>
           </main>
         </SidebarInset>
       </div>
