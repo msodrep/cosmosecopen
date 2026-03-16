@@ -23,9 +23,12 @@ import { RiskMatrix } from '@/components/riscos/RiskMatrix';
 import { cn } from '@/lib/utils';
 
 export default function VCISORiscos() {
-  const { data: risks, isLoading } = useRisks({ filterByFramework: false });
+  const { data: risks, isLoading: _isLoading } = useRisks({ filterByFramework: false });
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { isDemo } = (useOutletContext() || {}) as { isDemo?: boolean };
+  const isLoading = isDemo ? false : _isLoading;
+  const allRisks = isDemo ? (MOCK_RISKS as unknown as Risk[]) : (risks || []);
   const [acceptDialog, setAcceptDialog] = useState<Risk | null>(null);
   const [justification, setJustification] = useState('');
   const [accepting, setAccepting] = useState(false);
