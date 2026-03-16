@@ -64,23 +64,23 @@ export default function VCISODashboard() {
   const isLoading = isDemo ? false : (assessmentsQuery.isLoading || risksQuery.isLoading || controlsQuery.isLoading || actionPlansQuery.isLoading);
 
   // Metrics
-  const overdueCount = actionPlans.filter(
+  const overdueCount = isDemo ? MOCK_DASHBOARD.overdueCount : actionPlans.filter(
     (p) => p.status !== 'done' && p.due_date && new Date(p.due_date) < new Date()
   ).length;
 
-  const criticalRisks = risks.filter(
-    (r) => calculateRiskLevel(r.inherent_probability, r.inherent_impact) >= 20
-  );
+  const criticalRisks = isDemo
+    ? Array(MOCK_DASHBOARD.criticalRisks).fill(null)
+    : risks.filter((r) => calculateRiskLevel(r.inherent_probability, r.inherent_impact) >= 20);
 
   const completedPlans = actionPlans.filter((p) => p.status === 'done').length;
   const totalPlans = actionPlans.length;
-  const planCompletionRate = totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0;
+  const planCompletionRate = isDemo ? MOCK_DASHBOARD.planCompletionRate : (totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0);
 
   const conformeCount = assessments.filter((a) => a.status === 'conforme').length;
-  const complianceRate = assessments.length > 0
-    ? Math.round((conformeCount / assessments.length) * 100) : 0;
+  const complianceRate = isDemo ? MOCK_DASHBOARD.complianceRate : (assessments.length > 0
+    ? Math.round((conformeCount / assessments.length) * 100) : 0);
 
-  const acceptedRisks = risks.filter(r => r.treatment === 'aceitar');
+  const acceptedRisks = isDemo ? Array(MOCK_DASHBOARD.acceptedRisks).fill(null) : risks.filter(r => r.treatment === 'aceitar');
 
   // KRIs - top 3 critical
   const topKRIs = useMemo(() => {
