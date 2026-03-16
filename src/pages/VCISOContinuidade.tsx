@@ -39,8 +39,12 @@ const emptyForm = {
 };
 
 export default function VCISOContinuidade() {
-  const { data: tests, isLoading, createTest, updateTest, deleteTest } = useContinuityTests();
-  const { canEdit, isCLevel } = usePermissions();
+  const { data: tests, isLoading: _isLoading, createTest, updateTest, deleteTest } = useContinuityTests();
+  const { canEdit: _canEdit, isCLevel } = usePermissions();
+  const { isDemo } = (useOutletContext() || {}) as { isDemo?: boolean };
+  const canEdit = isDemo ? false : _canEdit;
+  const isLoading = isDemo ? false : _isLoading;
+  const allTests = isDemo ? (MOCK_CONTINUITY_TESTS as unknown as ContinuityTest[]) : (tests || []);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTest, setEditingTest] = useState<ContinuityTest | null>(null);
   const [form, setForm] = useState(emptyForm);
