@@ -244,7 +244,7 @@ export default function VCISORiscos() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <CardTitle className="text-base font-space">Todos os Riscos ({risks?.length || 0})</CardTitle>
+            <CardTitle className="text-base font-space">Todos os Riscos ({allRisks.length})</CardTitle>
             <Select value={treatmentFilter} onValueChange={setTreatmentFilter}>
               <SelectTrigger className="w-[180px] h-8">
                 <Filter className="w-3 h-3 mr-1" />
