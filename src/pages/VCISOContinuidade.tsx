@@ -11,6 +11,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ShieldCheck, Plus, Calendar as CalendarIcon, CheckCircle2, Clock, XCircle, FileText, Trash2, Pencil, Eye, ChevronLeft, ChevronRight, List } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useContinuityTests, ContinuityTest, TEST_TYPES, TEST_STATUSES } from '@/hooks/useContinuityTests';
+import { useOutletContext } from 'react-router-dom';
+import { MOCK_CONTINUITY_TESTS } from '@/lib/vciso-mock-data';
 import { format, parseISO, isPast, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
