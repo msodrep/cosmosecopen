@@ -11,6 +11,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useKRIs, useKRIHistory, type KRI } from '@/hooks/useKRIs';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useOutletContext } from 'react-router-dom';
+import { MOCK_KRIS } from '@/lib/vciso-mock-data';
 import {
   Activity,
   Plus,
@@ -152,8 +154,12 @@ function KRIHistoryPanel({ kri, canEdit }: { kri: KRI; canEdit: boolean }) {
 }
 
 export default function VCISOKRIs() {
-  const { data: kris, isLoading, createKRI, updateKRI, deleteKRI } = useKRIs();
-  const { canEdit, isCLevel } = usePermissions();
+  const { data: kris, isLoading: _isLoading, createKRI, updateKRI, deleteKRI } = useKRIs();
+  const { canEdit: _canEdit, isCLevel } = usePermissions();
+  const { isDemo } = (useOutletContext() || {}) as { isDemo?: boolean };
+  const canEdit = isDemo ? false : _canEdit;
+  const isLoading = isDemo ? false : _isLoading;
+  const allKRIs = isDemo ? (MOCK_KRIS as unknown as KRI[]) : (kris || []);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingKRI, setEditingKRI] = useState<KRI | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -162,19 +168,17 @@ export default function VCISOKRIs() {
   const [expandedKRI, setExpandedKRI] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    if (!kris) return [];
-    return kris.filter((k) => filterSeverity === 'all' || k.severity === filterSeverity);
-  }, [kris, filterSeverity]);
+    return allKRIs.filter((k) => filterSeverity === 'all' || k.severity === filterSeverity);
+  }, [allKRIs, filterSeverity]);
 
   const stats = useMemo(() => {
-    if (!kris) return { total: 0, critical: 0, offTarget: 0, onTarget: 0 };
     return {
-      total: kris.length,
-      critical: kris.filter((k) => k.severity === 'critical').length,
-      offTarget: kris.filter((k) => Math.abs(k.current_value - k.target_value) > k.target_value * 0.2).length,
-      onTarget: kris.filter((k) => Math.abs(k.current_value - k.target_value) <= k.target_value * 0.2).length,
+      total: allKRIs.length,
+      critical: allKRIs.filter((k) => k.severity === 'critical').length,
+      offTarget: allKRIs.filter((k) => Math.abs(k.current_value - k.target_value) > k.target_value * 0.2).length,
+      onTarget: allKRIs.filter((k) => Math.abs(k.current_value - k.target_value) <= k.target_value * 0.2).length,
     };
-  }, [kris]);
+  }, [allKRIs]);
 
   const openCreate = () => {
     setEditingKRI(null);

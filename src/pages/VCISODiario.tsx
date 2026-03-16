@@ -15,6 +15,8 @@ import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useVCISOLogEntries, type VCISOLogEntry } from '@/hooks/useVCISOLogEntries';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useOutletContext } from 'react-router-dom';
+import { MOCK_DIARIO } from '@/lib/vciso-mock-data';
 import {
   BookOpen,
   Plus,
@@ -71,8 +73,12 @@ function exportCSV(entries: VCISOLogEntry[], monthLabel: string) {
 }
 
 export default function VCISODiario() {
-  const { data: entries, isLoading, createEntry, updateEntry, deleteEntry } = useVCISOLogEntries();
-  const { canEdit, isCLevel } = usePermissions();
+  const { data: entries, isLoading: _isLoading, createEntry, updateEntry, deleteEntry } = useVCISOLogEntries();
+  const { canEdit: _canEdit, isCLevel } = usePermissions();
+  const { isDemo } = (useOutletContext() || {}) as { isDemo?: boolean };
+  const canEdit = isDemo ? false : _canEdit;
+  const isLoading = isDemo ? false : _isLoading;
+  const allEntries = isDemo ? (MOCK_DIARIO as unknown as VCISOLogEntry[]) : (entries || []);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<VCISOLogEntry | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -85,13 +91,12 @@ export default function VCISODiario() {
   const monthLabel = format(filterMonth, 'yyyy-MM');
 
   const filtered = useMemo(() => {
-    if (!entries) return [];
-    return entries.filter((e) => {
+    return allEntries.filter((e) => {
       const dateMatch = isWithinInterval(new Date(e.entry_date), { start: monthStart, end: monthEnd });
       const catMatch = filterCategory === 'all' || e.category === filterCategory;
       return dateMatch && catMatch;
     });
-  }, [entries, filterCategory, monthStart, monthEnd]);
+  }, [allEntries, filterCategory, monthStart, monthEnd]);
 
   const monthStats = useMemo(() => {
     const totalHours = filtered.reduce((acc, e) => acc + (e.hours_spent || 0), 0);

@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, Shield, CheckCircle2, Stamp, Clock, History, Filter } from 'lucide-react';
 import { useRisks, Risk, calculateRiskLevel, getRiskLevelLabel, TREATMENT_OPTIONS } from '@/hooks/useRisks';
+import { useOutletContext } from 'react-router-dom';
+import { MOCK_RISKS } from '@/lib/vciso-mock-data';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,9 +23,12 @@ import { RiskMatrix } from '@/components/riscos/RiskMatrix';
 import { cn } from '@/lib/utils';
 
 export default function VCISORiscos() {
-  const { data: risks, isLoading } = useRisks({ filterByFramework: false });
+  const { data: risks, isLoading: _isLoading } = useRisks({ filterByFramework: false });
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { isDemo } = (useOutletContext() || {}) as { isDemo?: boolean };
+  const isLoading = isDemo ? false : _isLoading;
+  const allRisks = isDemo ? (MOCK_RISKS as unknown as Risk[]) : (risks || []);
   const [acceptDialog, setAcceptDialog] = useState<Risk | null>(null);
   const [justification, setJustification] = useState('');
   const [accepting, setAccepting] = useState(false);
@@ -45,18 +50,17 @@ export default function VCISORiscos() {
     },
   });
 
-  const criticalRisks = (risks || []).filter(r => calculateRiskLevel(r.inherent_probability, r.inherent_impact) >= 20);
-  const acceptedRisks = (risks || []).filter(r => r.treatment === 'aceitar');
-  const highRisks = (risks || []).filter(r => {
+  const criticalRisks = allRisks.filter(r => calculateRiskLevel(r.inherent_probability, r.inherent_impact) >= 20);
+  const acceptedRisks = allRisks.filter(r => r.treatment === 'aceitar');
+  const highRisks = allRisks.filter(r => {
     const lvl = calculateRiskLevel(r.inherent_probability, r.inherent_impact);
     return lvl >= 12 && lvl < 20;
   });
 
   const filteredRisks = useMemo(() => {
-    if (!risks) return [];
-    if (treatmentFilter === 'all') return risks;
-    return risks.filter(r => r.treatment === treatmentFilter);
-  }, [risks, treatmentFilter]);
+    if (treatmentFilter === 'all') return allRisks;
+    return allRisks.filter(r => r.treatment === treatmentFilter);
+  }, [allRisks, treatmentFilter]);
 
   const handleFormalAcceptance = async () => {
     if (!acceptDialog || !user) return;
@@ -118,7 +122,7 @@ export default function VCISORiscos() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total de Riscos', value: risks?.length || 0, color: 'text-foreground' },
+          { label: 'Total de Riscos', value: allRisks.length, color: 'text-foreground' },
           { label: 'Críticos', value: criticalRisks.length, color: 'text-red-500' },
           { label: 'Altos', value: highRisks.length, color: 'text-orange-500' },
           { label: 'Aceitos Formalmente', value: acceptedRisks.length, color: 'text-amber-500' },
@@ -133,13 +137,13 @@ export default function VCISORiscos() {
       </div>
 
       {/* Risk Matrix */}
-      {!isLoading && risks && risks.length > 0 && (
+      {!isLoading && allRisks.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-space">Matriz de Risco</CardTitle>
           </CardHeader>
           <CardContent>
-            <RiskMatrix risks={risks} />
+            <RiskMatrix risks={allRisks as any} />
           </CardContent>
         </Card>
       )}
@@ -240,7 +244,7 @@ export default function VCISORiscos() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <CardTitle className="text-base font-space">Todos os Riscos ({risks?.length || 0})</CardTitle>
+            <CardTitle className="text-base font-space">Todos os Riscos ({allRisks.length})</CardTitle>
             <Select value={treatmentFilter} onValueChange={setTreatmentFilter}>
               <SelectTrigger className="w-[180px] h-8">
                 <Filter className="w-3 h-3 mr-1" />
@@ -260,7 +264,7 @@ export default function VCISORiscos() {
             <Skeleton className="h-40 w-full" />
           ) : filteredRisks.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              {risks?.length === 0 ? 'Cadastre riscos no módulo GRC para visualizá-los aqui.' : 'Nenhum risco com este tratamento.'}
+              {allRisks.length === 0 ? 'Cadastre riscos no módulo GRC para visualizá-los aqui.' : 'Nenhum risco com este tratamento.'}
             </p>
           ) : (
             <div className="overflow-x-auto">

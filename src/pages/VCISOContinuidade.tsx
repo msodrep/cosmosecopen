@@ -11,6 +11,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ShieldCheck, Plus, Calendar as CalendarIcon, CheckCircle2, Clock, XCircle, FileText, Trash2, Pencil, Eye, ChevronLeft, ChevronRight, List } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useContinuityTests, ContinuityTest, TEST_TYPES, TEST_STATUSES } from '@/hooks/useContinuityTests';
+import { useOutletContext } from 'react-router-dom';
+import { MOCK_CONTINUITY_TESTS } from '@/lib/vciso-mock-data';
 import { format, parseISO, isPast, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -37,8 +39,12 @@ const emptyForm = {
 };
 
 export default function VCISOContinuidade() {
-  const { data: tests, isLoading, createTest, updateTest, deleteTest } = useContinuityTests();
-  const { canEdit, isCLevel } = usePermissions();
+  const { data: tests, isLoading: _isLoading, createTest, updateTest, deleteTest } = useContinuityTests();
+  const { canEdit: _canEdit, isCLevel } = usePermissions();
+  const { isDemo } = (useOutletContext() || {}) as { isDemo?: boolean };
+  const canEdit = isDemo ? false : _canEdit;
+  const isLoading = isDemo ? false : _isLoading;
+  const allTests = isDemo ? (MOCK_CONTINUITY_TESTS as unknown as ContinuityTest[]) : (tests || []);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTest, setEditingTest] = useState<ContinuityTest | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -78,13 +84,13 @@ export default function VCISOContinuidade() {
     setDialogOpen(false);
   };
 
-  const filtered = (tests || []).filter(t => filter === 'all' || t.status === filter);
+  const filtered = allTests.filter(t => filter === 'all' || t.status === filter);
 
   const stats = {
-    total: tests?.length || 0,
-    scheduled: tests?.filter(t => t.status === 'agendado').length || 0,
-    completed: tests?.filter(t => t.status === 'concluido').length || 0,
-    overdue: tests?.filter(t => t.status === 'agendado' && isPast(parseISO(t.scheduled_date))).length || 0,
+    total: allTests.length,
+    scheduled: allTests.filter(t => t.status === 'agendado').length,
+    completed: allTests.filter(t => t.status === 'concluido').length,
+    overdue: allTests.filter(t => t.status === 'agendado' && isPast(parseISO(t.scheduled_date))).length,
   };
 
   // Calendar data

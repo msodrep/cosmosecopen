@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { format, differenceInDays, startOfMonth, endOfMonth, addMonths, isBefore, isAfter, max as dateMax, min as dateMin } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRoadmapItems, type RoadmapItem } from '@/hooks/useRoadmapItems';
+import { MOCK_ROADMAP } from '@/lib/vciso-mock-data';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
   Map,
@@ -73,8 +75,11 @@ const emptyForm = {
 };
 
 export default function VCISORoadmap() {
-  const { data: items, isLoading, createItem, updateItem, deleteItem } = useRoadmapItems();
-  const { canEdit, isCLevel } = usePermissions();
+  const { data: items, isLoading: _isLoading, createItem, updateItem, deleteItem } = useRoadmapItems();
+  const { canEdit: _canEdit, isCLevel } = usePermissions();
+  const { isDemo } = (useOutletContext() || {}) as { isDemo?: boolean };
+  const canEdit = isDemo ? false : _canEdit;
+  const isLoading = isDemo ? false : _isLoading;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<RoadmapItem | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -84,21 +89,23 @@ export default function VCISORoadmap() {
   const [viewMode, setViewMode] = useState<'gantt' | 'list'>('gantt');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+  const allItems = isDemo ? (MOCK_ROADMAP as unknown as RoadmapItem[]) : items;
+
   const filtered = useMemo(() => {
-    if (!items) return [];
-    return items.filter((i) => filterStatus === 'all' || i.status === filterStatus);
-  }, [items, filterStatus]);
+    if (!allItems) return [];
+    return allItems.filter((i) => filterStatus === 'all' || i.status === filterStatus);
+  }, [allItems, filterStatus]);
 
   const stats = useMemo(() => {
-    if (!items) return { total: 0, planned: 0, in_progress: 0, done: 0, blocked: 0 };
+    if (!allItems) return { total: 0, planned: 0, in_progress: 0, done: 0, blocked: 0 };
     return {
-      total: items.length,
-      planned: items.filter((i) => i.status === 'planned').length,
-      in_progress: items.filter((i) => i.status === 'in_progress').length,
-      done: items.filter((i) => i.status === 'done').length,
-      blocked: items.filter((i) => i.status === 'blocked').length,
+      total: allItems.length,
+      planned: allItems.filter((i) => i.status === 'planned').length,
+      in_progress: allItems.filter((i) => i.status === 'in_progress').length,
+      done: allItems.filter((i) => i.status === 'done').length,
+      blocked: allItems.filter((i) => i.status === 'blocked').length,
     };
-  }, [items]);
+  }, [allItems]);
 
   // Gantt timeline computation
   const ganttData = useMemo(() => {
