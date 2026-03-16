@@ -73,8 +73,12 @@ function exportCSV(entries: VCISOLogEntry[], monthLabel: string) {
 }
 
 export default function VCISODiario() {
-  const { data: entries, isLoading, createEntry, updateEntry, deleteEntry } = useVCISOLogEntries();
-  const { canEdit, isCLevel } = usePermissions();
+  const { data: entries, isLoading: _isLoading, createEntry, updateEntry, deleteEntry } = useVCISOLogEntries();
+  const { canEdit: _canEdit, isCLevel } = usePermissions();
+  const { isDemo } = (useOutletContext() || {}) as { isDemo?: boolean };
+  const canEdit = isDemo ? false : _canEdit;
+  const isLoading = isDemo ? false : _isLoading;
+  const allEntries = isDemo ? (MOCK_DIARIO as unknown as VCISOLogEntry[]) : (entries || []);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<VCISOLogEntry | null>(null);
   const [form, setForm] = useState(emptyForm);
