@@ -137,13 +137,13 @@ export default function VCISORiscos() {
       </div>
 
       {/* Risk Matrix */}
-      {!isLoading && risks && risks.length > 0 && (
+      {!isLoading && allRisks.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-space">Matriz de Risco</CardTitle>
           </CardHeader>
           <CardContent>
-            <RiskMatrix risks={risks} />
+            <RiskMatrix risks={allRisks as any} />
           </CardContent>
         </Card>
       )}
