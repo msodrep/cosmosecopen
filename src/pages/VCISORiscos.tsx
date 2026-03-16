@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, Shield, CheckCircle2, Stamp, Clock, History, Filter } from 'lucide-react';
 import { useRisks, Risk, calculateRiskLevel, getRiskLevelLabel, TREATMENT_OPTIONS } from '@/hooks/useRisks';
+import { useOutletContext } from 'react-router-dom';
+import { MOCK_RISKS } from '@/lib/vciso-mock-data';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
