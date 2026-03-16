@@ -89,10 +89,12 @@ export default function VCISORoadmap() {
   const [viewMode, setViewMode] = useState<'gantt' | 'list'>('gantt');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+  const allItems = isDemo ? (MOCK_ROADMAP as unknown as RoadmapItem[]) : items;
+
   const filtered = useMemo(() => {
-    if (!items) return [];
-    return items.filter((i) => filterStatus === 'all' || i.status === filterStatus);
-  }, [items, filterStatus]);
+    if (!allItems) return [];
+    return allItems.filter((i) => filterStatus === 'all' || i.status === filterStatus);
+  }, [allItems, filterStatus]);
 
   const stats = useMemo(() => {
     if (!items) return { total: 0, planned: 0, in_progress: 0, done: 0, blocked: 0 };
