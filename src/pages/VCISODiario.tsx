@@ -15,6 +15,8 @@ import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useVCISOLogEntries, type VCISOLogEntry } from '@/hooks/useVCISOLogEntries';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useOutletContext } from 'react-router-dom';
+import { MOCK_DIARIO } from '@/lib/vciso-mock-data';
 import {
   BookOpen,
   Plus,
