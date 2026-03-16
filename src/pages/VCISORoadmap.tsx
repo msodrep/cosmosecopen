@@ -97,15 +97,15 @@ export default function VCISORoadmap() {
   }, [allItems, filterStatus]);
 
   const stats = useMemo(() => {
-    if (!items) return { total: 0, planned: 0, in_progress: 0, done: 0, blocked: 0 };
+    if (!allItems) return { total: 0, planned: 0, in_progress: 0, done: 0, blocked: 0 };
     return {
-      total: items.length,
-      planned: items.filter((i) => i.status === 'planned').length,
-      in_progress: items.filter((i) => i.status === 'in_progress').length,
-      done: items.filter((i) => i.status === 'done').length,
-      blocked: items.filter((i) => i.status === 'blocked').length,
+      total: allItems.length,
+      planned: allItems.filter((i) => i.status === 'planned').length,
+      in_progress: allItems.filter((i) => i.status === 'in_progress').length,
+      done: allItems.filter((i) => i.status === 'done').length,
+      blocked: allItems.filter((i) => i.status === 'blocked').length,
     };
-  }, [items]);
+  }, [allItems]);
 
   // Gantt timeline computation
   const ganttData = useMemo(() => {
