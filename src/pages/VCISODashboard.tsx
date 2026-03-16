@@ -117,13 +117,14 @@ export default function VCISODashboard() {
 
   // vCISO hours this month
   const monthHours = useMemo(() => {
+    if (isDemo) return MOCK_DASHBOARD.monthHours;
     const now = new Date();
     const start = startOfMonth(now);
     const end = endOfMonth(now);
     return logEntries
       .filter(e => isWithinInterval(new Date(e.entry_date), { start, end }))
       .reduce((acc, e) => acc + (e.hours_spent || 0), 0);
-  }, [logEntries]);
+  }, [logEntries, isDemo]);
 
   const TrendIcon = ({ trend }: { trend: string }) => {
     if (trend === 'up') return <TrendingUp className="w-3.5 h-3.5 text-destructive" />;
